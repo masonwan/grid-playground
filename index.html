@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>
+        Grid Listing Playground
+    </title>
+    <style type="text/css">
+        body {
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            border: 1px solid #DDDDDD;
+            max-width: 1618px;
+        }
+
+        .card-container {
+            width: 1200px;
+            height: 2400px;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .card {
+            position: absolute;
+        }
+
+        .size1x1 {
+            width: 250px;
+            height: 250px;
+        }
+
+        .size1x2 {
+            width: 250px;
+            height: 500px;
+        }
+
+        .size2x1 {
+            width: 500px;
+            height: 250px;
+        }
+
+        .size2x2 {
+            width: 500px;
+            height: 500px;
+        }
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" defer></script>
+    <script type="text/javascript" src="script.js" defer></script>
+</head>
+<body>
+
+<div class="container">
+    <div class="card-container">
+        <div class="card size1x1">
+            <img src="http://placehold.it/250/001F3F/fff" alt=""/>
+        </div>
+        <div class="card size2x1">
+            <img src="http://placehold.it/500x250/3D9970/fff" alt=""/>
+        </div>
+        <div class="card size2x2">
+            <img src="http://placehold.it/500/0074D9/fff" alt=""/>
+        </div>
+        <div class="card size1x1">
+            <img src="http://placehold.it/250/F012BE/fff" alt=""/>
+        </div>
+        <div class="card size1x2">
+            <img src="http://placehold.it/250x500/7FDBFF/111" alt=""/>
+        </div>
+        <div class="card size1x1">
+            <img src="http://placehold.it/250x250/001F3F/fff" alt=""/>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
