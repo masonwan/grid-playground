@@ -1,50 +1,72 @@
 class Pos {
-    x:Number = 0
-    y:Number = 0
+    static EMPTY:Pos = new Pos(0, 0)
+    x:number = 0
+    y:number = 0
 
-    constructor(x?:Number, y?:Number) {
+    constructor(x?:number, y?:number) {
         this.x = x
         this.y = y
     }
 }
 
 class Size {
-    width:Number = 0
-    height:Number = 0
+    static EMPTY:Size = new Size(0, 0)
+    width:number = 0
+    height:number = 0
 
-    constructor(width?:Number, height?:Number) {
+    constructor(width?:number, height?:number) {
         this.width = width
         this.height = height
+    }
+
+    public area() {
+        return this.width * this.height
     }
 }
 
 class Tile {
-    pos:Pos = new Pos(0, 0)
-    size:Size = new Size(0, 0)
+    pos:Pos
+    size:Size
 
-    constructor(position?:Pos, size?:Size) {
-        this.pos = position
-        this.size = size
+    constructor(pos?:Pos, size?:Size) {
+        this.pos = pos || Pos.EMPTY
+        this.size = size || Size.EMPTY
+    }
+}
+
+class Tempalte {
+    tiles:Tile[] = []
+
+    constructor() {
+    }
+
+    public area() {
+        var areaSum = 0
+        this.tiles.forEach(function (tile) {
+            areaSum += tile.size.area()
+        })
+        return areaSum
     }
 }
 
 class Generator {
-    static generate(numCols:Number, numRows:Number) {
+    static generate(numCols:Number, numRows:Number):Tempalte {
         if (typeof(numCols) !== 'number') {
             throw new Error('Number of columns must be specified.')
         }
         numRows = numRows || 5
 
         var tiles = []
-        for (var i = 0; i < 5; i++) {
-            var tile = new Tile()
+        for (var i = 0; i < 4; i++) {
+            var tile = new Tile(new Pos(0, 0), new Size(1, 1))
             tiles.push(tile)
         }
+        var template = new Tempalte()
+        template.tiles = tiles
 
-        return []
+        return template
     }
 }
-
 
 exports.Generator = Generator
 
