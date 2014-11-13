@@ -1,0 +1,27 @@
+{
+  "name": "grid-playground",
+  "version": "0.1.0",
+  "description": "grid-playground",
+  "main": "server.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masonwan/grid-playground.git"
+  },
+  "author": "Mason Wan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/masonwan/grid-playground/issues"
+  },
+  "homepage": "https://github.com/masonwan/grid-playground",
+  "dependencies": {
+    "bluebird": "^2.3.11",
+    "chai": "^1.10.0",
+    "winston": "^0.8.3"
+  }
+}

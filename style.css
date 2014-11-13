@@ -1,0 +1,56 @@
+body {
+    box-sizing: border-box;
+}
+
+.container {
+    border: 1px solid #DDDDDD;
+    max-width: 1366px;
+}
+
+.card-container {
+    position: absolute;
+    margin-left: 10%;
+    width: 80%;
+    height: 2400px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.card {
+    position: absolute;
+}
+
+.size1x1 {
+    width: 250px;
+    height: 250px;
+}
+
+.size1x2 {
+    width: 250px;
+    height: 500px;
+}
+
+.size2x1 {
+    width: 500px;
+    height: 250px;
+}
+
+.size2x2 {
+    width: 500px;
+    height: 500px;
+}
+
+.size2x3 {
+    width: 500px;
+    height: 750px;
+}
+
+.size3x2 {
+    width: 750px;
+    height: 500px;
+}
+
+.size3x3 {
+    width: 750px;
+    height: 750px;
+}
