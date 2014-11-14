@@ -1,20 +1,45 @@
 body {
     box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+
+.result-banner {
+    padding: 8px 16px;
+    border: 0;
+    border-bottom: 1px solid rgba(170, 170, 170, 0.33);
+    margin: 0;
+}
+
+.filter-bar {
+    padding: 8px 16px;
+}
+
+.filter-button {
+    padding: 4px 16px;
+    border: 1px solid rgba(170, 170, 170, 0.33);
+    border-radius: 3px;
+    margin: auto 8px;
+    background: transparent;
+    min-width: 90px;
+    min-height: 24px;
+    outline: none;
 }
 
 .container {
-    border: 1px solid #DDDDDD;
-    max-width: 1366px;
-    background: #dddddd;
+    font-family: Arial, sans-serif;
+    outline: none;
 }
 
 .card-container {
     position: relative;
-    margin-left: 10%;
+    /*margin-left: 10%;*/
     width: auto;
     height: 2400px;
     overflow-x: hidden;
     overflow-y: auto;
+    background: #dddddd;
 }
 
 .card {

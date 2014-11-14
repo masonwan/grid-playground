@@ -127,33 +127,13 @@ class Generator {
         return list[index]
     }
 
-    static generate(numCols:number, numRows:number):Template {
-        if (typeof(numCols) !== 'number') {
-            throw new Error('Number of columns must be specified.')
-        }
-        numRows = numRows || 5
-
-        var tiles = [
-            new Tile(0, 0, 1, 2),
-            new Tile(1, 0, 1, 1),
-            new Tile(2, 0, 1, 1),
-            new Tile(3, 0, 1, 1),
-            new Tile(1, 1, 1, 2),
-            new Tile(3, 1, 1, 1)
-        ]
-
-        var template = new Template()
-        template.tiles = tiles
-        return template
-    }
-
     numCols:number
 
     constructor(numCols:number) {
         this.numCols = numCols
     }
 
-    temp = [
+    private template = [
         new Tile(0, 0, 1, 2),
         new Tile(1, 0, 1, 1),
         new Tile(2, 0, 1, 1),
@@ -165,16 +145,16 @@ class Generator {
         new Tile(2, 4, 1, 1),
         new Tile(3, 4, 1, 1)
     ]
-    index = -1
-    blockNum = 1
+    private index = -1
+    private blockNum = 1
 
     nextTile():Tile {
         this.index++
-        if (this.index >= this.temp.length) {
+        if (this.index >= this.template.length) {
             this.blockNum++
             this.index = 0
         }
-        var tile = this.temp[this.index]
+        var tile = this.template[this.index]
         var newTile = new Tile(tile.pos, tile.size)
         newTile.pos.y += (this.blockNum - 1) * 5
         return newTile
@@ -212,8 +192,8 @@ class TilePanel {
             .attr('alt', url)
 
         // Create the div card.
-        var left = 250 * column + column * TilePanel.GAP_LENGTH
-        var top = 250 * row + row * TilePanel.GAP_LENGTH
+        var left = 250 * column + (column + 1) * TilePanel.GAP_LENGTH
+        var top = 250 * row + (row + 1) * TilePanel.GAP_LENGTH
         var div = document.createElement('div')
         $(div)
             .addClass('card')
@@ -230,7 +210,7 @@ class TilePanel {
 $(function () {
     // Fill the container.
     if (data == null) {
-        console.error('Cannot find data to proceed')
+        throw new Error('Cannot find data to proceed')
     }
     var searchResults = data
 
@@ -249,5 +229,24 @@ $(function () {
         productTile.price = searchResult.price
 
         tilePanel.addTile(productTile)
+    })
+
+    var $window = $(window)
+    var $document = $(document)
+    var clientWidth = $window.width()
+    var clientHeight = $window.height()
+    var documentHeight = $document.height()
+    $window.scroll(function() {
+        var scrollTop = $(window).scrollTop()
+        var diff = documentHeight - (scrollTop + clientHeight)
+        console.info('diff:', diff)
+        if (diff < 1000) {
+            console.info('Reload!!')
+        }
+    })
+    $window.resize(function (event) {
+        console.log(event)
+        clientWidth = $window.width()
+        clientHeight = $window.height()
     })
 })
