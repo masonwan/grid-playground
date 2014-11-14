@@ -1,0 +1,22 @@
+{
+  "name": "grid-playground",
+  "version": "0.0.1",
+  "homepage": "https://github.com/masonwan/grid-playground",
+  "authors": [
+    "Mason Wan <menghsiw@amazon.com>"
+  ],
+  "description": "A playground for tile search result.",
+  "main": "server.js",
+  "moduleType": [
+    "es6",
+    "globals"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
