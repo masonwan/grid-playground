@@ -1,3 +1,6 @@
+/**
+ * Position
+ */
 class Pos {
     static EMPTY:Pos = new Pos(0, 0)
     x:number = 0
@@ -24,6 +27,9 @@ class Size {
     }
 }
 
+/**
+ * Represent the basic information of a tile.
+ */
 class Tile {
     pos:Pos = Pos.EMPTY
     size:Size = Size.EMPTY
@@ -47,6 +53,9 @@ class Tile {
     }
 }
 
+/**
+ * A derived class of Tile. It contains the product information.
+ */
 class ProductTile extends Tile {
     price:number
     imageId:string
@@ -86,6 +95,9 @@ class Template {
     }
 }
 
+/**
+ * Responsible to generate tile layout.
+ */
 class Generator {
     private static AVAILABLE_SIZES = [
         new Size(1, 1),
@@ -161,9 +173,16 @@ class Generator {
     }
 }
 
-class TilePanel {
+/**
+ * Responsible to control the DOM.
+ */
+class TileViewController {
     private static GAP_LENGTH:number = 5
     $container
+    config = {
+        isAutoCrop: false
+    }
+    private containerHeight:number = 0
 
     constructor(selector) {
         this.$container = $(selector)
@@ -173,27 +192,35 @@ class TilePanel {
         this.$container.empty()
     }
 
-    addTile(tile:ProductTile) {
-        console.log('Adding tile:', tile)
+    /**
+     * TODO: Update the position and size of all tiles according to the container size.
+     */
+    update() {
+    }
 
+    // TODO: smoothly adding the tiles.
+
+    addTile(tile:ProductTile) {
         var numColumns = tile.size.width
         var numRows = tile.size.height
         var column = tile.pos.x
         var row = tile.pos.y
 
         // Create the image element.
-        var width = 250 * numColumns + TilePanel.GAP_LENGTH * (numColumns - 1)
-        var height = 250 * numRows + TilePanel.GAP_LENGTH * (numRows - 1)
+        var width = 250 * numColumns + TileViewController.GAP_LENGTH * (numColumns - 1)
+        var height = 250 * numRows + TileViewController.GAP_LENGTH * (numRows - 1)
         var longest = Math.max(width, height)
-        var url = 'http://ecx.images-amazon.com/images/I/' + tile.imageId + '._SL' + longest + '_.jpg'
+
+        var extraFunctionString = this.config.isAutoCrop ? '_AC' : ''
+        var url = 'http://ecx.images-amazon.com/images/I/' + tile.imageId + '._SL' + longest + extraFunctionString + '_.jpg'
         var image = document.createElement('img')
         $(image)
             .attr('src', url)
             .attr('alt', url)
 
         // Create the div card.
-        var left = 250 * column + (column + 1) * TilePanel.GAP_LENGTH
-        var top = 250 * row + (row + 1) * TilePanel.GAP_LENGTH
+        var left = 250 * column + (column + 1) * TileViewController.GAP_LENGTH
+        var top = 250 * row + (row + 1) * TileViewController.GAP_LENGTH
         var div = document.createElement('div')
         $(div)
             .addClass('card')
@@ -203,50 +230,107 @@ class TilePanel {
             .css('width', width)
             .css('height', height)
             .append(image)
-        this.$container.append(div)
+
+        // Calculate the container size.
+        var containerHeight = top + height + TileViewController.GAP_LENGTH + 50
+        if (containerHeight > this.containerHeight) {
+            this.containerHeight = containerHeight
+        }
+        var containerWidth = 250 * 4 + TileViewController.GAP_LENGTH * 5
+
+        this.$container
+            .height(this.containerHeight)
+            .width(containerWidth)
+            .append(div)
+    }
+
+    addTiles(tiles) {
+        var index = 0
+        var that = this
+        var intervalId = setInterval(function () {
+            if (index >= tiles.length) {
+                clearInterval(intervalId)
+                return
+            }
+
+            that.addTile(tiles[index])
+            index++
+        }, 10)
+    }
+}
+
+/**
+ * Responsible to send and get data.
+ */
+class DataService {
+    private nextDataIndex:number = 0
+
+    search(query, count) {
+        console.log('Search ' + query + ' with ' + count + ' items')
+        var that = this
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                if (that.nextDataIndex >= data.length) {
+                    resolve([])
+                }
+                var results = data.slice(that.nextDataIndex, that.nextDataIndex + count)
+                that.nextDataIndex += results.length
+                resolve(results)
+            }, 500)
+        })
     }
 }
 
 $(function () {
-    // Fill the container.
-    if (data == null) {
-        throw new Error('Cannot find data to proceed')
-    }
-    var searchResults = data
+    var dataService = new DataService()
+    var tilePanel = new TileViewController('.card-container')
 
-    var tilePanel = new TilePanel('.card-container')
     tilePanel.clear()
-
-    var generator = new Generator(4)
-    searchResults.forEach(function (searchResult, i) {
-        console.log(i)
-        var tile = generator.nextTile()
-        if (tile == null) {
-            return
-        }
-        var productTile = new ProductTile(tile)
-        productTile.imageId = searchResult.imageId
-        productTile.price = searchResult.price
-
-        tilePanel.addTile(productTile)
-    })
+    dataService.search('dress', 10)
+        .then(addSearchResultsToPanel)
 
     var $window = $(window)
     var $document = $(document)
     var clientWidth = $window.width()
     var clientHeight = $window.height()
-    var documentHeight = $document.height()
-    $window.scroll(function() {
+
+    $window.on('scroll', handleScroll)
+
+    function handleScroll() {
         var scrollTop = $(window).scrollTop()
-        var diff = documentHeight - (scrollTop + clientHeight)
-        console.info('diff:', diff)
+        var diff = $document.height() - (scrollTop + clientHeight)
+
         if (diff < 1000) {
-            console.info('Reload!!')
+            $window.off('scroll', handleScroll)
+            dataService
+                .search('', 10)
+                .then(addSearchResultsToPanel)
+                .done(function () {
+                    $window.on('scroll', handleScroll)
+                })
         }
-    })
+    }
+
     $window.resize(function (event) {
-        console.log(event)
         clientWidth = $window.width()
         clientHeight = $window.height()
     })
+
+    var generator = new Generator(4)
+
+    function addSearchResultsToPanel(searchResults) {
+        var productTiles = []
+        searchResults.forEach(function (searchResult, i) {
+            var tile = generator.nextTile()
+            if (tile == null) {
+                return
+            }
+            var productTile = new ProductTile(tile)
+            productTile.imageId = searchResult.imageId
+            productTile.price = searchResult.price
+
+            productTiles.push(productTile)
+        })
+        tilePanel.addTiles(productTiles)
+    }
 })

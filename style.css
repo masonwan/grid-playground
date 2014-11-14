@@ -34,11 +34,7 @@ body {
 
 .card-container {
     position: relative;
-    /*margin-left: 10%;*/
-    width: auto;
-    height: 2400px;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
     background: #dddddd;
 }
 
