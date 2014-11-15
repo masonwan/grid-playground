@@ -213,15 +213,16 @@ class TileViewController {
 
         var extraFunctionString = this.config.isAutoCrop ? '_AC' : ''
         var url = 'http://ecx.images-amazon.com/images/I/' + tile.imageId + '._SL' + longest + extraFunctionString + '_.jpg'
-        var image = document.createElement('img')
-        $(image)
-            .attr('src', url)
-            .attr('alt', url)
 
-        // Create the div card.
+        var tileContentHtml = '<div class="image" style=""><img src="$imageUrl" alt=""></div><div class="overlay" style=""></div><div class="info"><div class="price">$$price</div></div>'
+            .replace('$imageUrl', url)
+            .replace('$price', tile.price)
+
+        // Create the tile element.
         var left = 250 * column + (column + 1) * TileViewController.GAP_LENGTH
         var top = 250 * row + (row + 1) * TileViewController.GAP_LENGTH
         var div = document.createElement('div')
+
         $(div)
             .addClass('card')
             .addClass('size' + numColumns + 'x' + numRows)
@@ -229,7 +230,7 @@ class TileViewController {
             .css('top', top)
             .css('width', width)
             .css('height', height)
-            .append(image)
+            .html(tileContentHtml)
 
         // Calculate the container size.
         var containerHeight = top + height + TileViewController.GAP_LENGTH + 50
@@ -266,7 +267,6 @@ class DataService {
     private nextDataIndex:number = 0
 
     search(query, count) {
-        console.log('Search ' + query + ' with ' + count + ' items')
         var that = this
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
