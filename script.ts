@@ -214,23 +214,18 @@ class TileViewController {
         var extraFunctionString = this.config.isAutoCrop ? '_AC' : ''
         var url = 'http://ecx.images-amazon.com/images/I/' + tile.imageId + '._SL' + longest + extraFunctionString + '_.jpg'
 
-        var tileContentHtml = '<div class="image" style=""><img src="$imageUrl" alt=""></div><div class="overlay" style=""></div><div class="info"><div class="price">$$price</div></div>'
-            .replace('$imageUrl', url)
-            .replace('$price', tile.price)
+        var tileContentHtml = '<div class="card"><div class="image" style=""><img src="$imageUrl" alt=""></div><div class="overlay" style=""></div><div class="info"><div class="price">$$price</div></div></div>'
+            .replace(/\$imageUrl/, url)
+            .replace(/\$price/, tile.price.toString())
 
         // Create the tile element.
         var left = 250 * column + (column + 1) * TileViewController.GAP_LENGTH
         var top = 250 * row + (row + 1) * TileViewController.GAP_LENGTH
-        var div = document.createElement('div')
-
-        $(div)
-            .addClass('card')
-            .addClass('size' + numColumns + 'x' + numRows)
+        var $tileElement = $(tileContentHtml)
             .css('left', left)
             .css('top', top)
             .css('width', width)
             .css('height', height)
-            .html(tileContentHtml)
 
         // Calculate the container size.
         var containerHeight = top + height + TileViewController.GAP_LENGTH + 50
@@ -242,7 +237,7 @@ class TileViewController {
         this.$container
             .height(this.containerHeight)
             .width(containerWidth)
-            .append(div)
+            .append($tileElement)
     }
 
     addTiles(tiles) {
