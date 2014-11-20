@@ -80,9 +80,10 @@ class Template {
 
     public area():number {
         var areaSum = 0
-        this.tiles.forEach(function (tile) {
+        for (var i = 0; i < this.tiles.length; i++) {
+            var tile = this.tiles[i]
             areaSum += tile.size.area()
-        })
+        }
         return areaSum
     }
 
@@ -315,7 +316,8 @@ $(function () {
 
     function addSearchResultsToPanel(searchResults) {
         var productTiles = []
-        searchResults.forEach(function (searchResult, i) {
+        for (var i = 0; i < searchResults.length; i++) {
+            var searchResult = searchResults[i]
             var tile = generator.nextTile()
             if (tile == null) {
                 return
@@ -325,7 +327,7 @@ $(function () {
             productTile.price = searchResult.price
 
             productTiles.push(productTile)
-        })
+        }
         tilePanel.addTiles(productTiles)
     }
 })
