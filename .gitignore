@@ -1,2 +1,4 @@
-script.js
-script.js.map
+tile/*.js
+tile/*.map
+waterfall/*.js
+waterfall/*.map
