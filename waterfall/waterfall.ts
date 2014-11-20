@@ -141,7 +141,6 @@ class DataService {
 }
 
 class Pipe {
-    gapLength = 5
     index:number
     pos:Pos
     size:Size
@@ -164,7 +163,6 @@ class WaterfallViewController {
     $container
     pipes:Pipe[] = []
     cards:Card[] = []
-    numCards:number = 0
     latestCardIndex:number = -1
 
     constructor(selector) {
@@ -218,19 +216,22 @@ class WaterfallViewController {
         Promise.settle(promises)
             .then(function (results) {
                 var cards = []
-                results.forEach(function (r) {
+                for (var i = 0; i < results.length; i++) {
+                    var r = results[i]
                     if (r.isRejected()) {
                         console.warn(r.reason())
                     } else {
                         cards.push(r.value())
                     }
-                })
+                }
                 return cards
             })
             .done(function (cards) {
                 console.log('Add', cards.length, 'cards')
 
-                cards.forEach(function (card) {
+                for (var i = 0; i < cards.length; i++) {
+                    var card = cards[i]
+
                     var pipe = that.getNextPipe()
                     var y = card.pos.y = pipe.pos.y + pipe.size.height + that.gapLength
                     var x = card.pos.x = pipe.pos.x
@@ -242,7 +243,7 @@ class WaterfallViewController {
                     console.log('The height grows to ', pipe.size.height)
 
                     that.$container.height(pipe.pos.y + pipe.size.height)
-                })
+                }
 
                 var elements = cards.map(function (card) {
                     return card.$element
@@ -271,22 +272,6 @@ class WaterfallViewController {
 
         return pipeWithMinHeight
     }
-
-    static getImageSize(url) {
-        return new Promise(function (resolve, reject) {
-            var imgElement = document.createElement('img')
-            imgElement.onload = function () {
-                console.log(window.x = imgElement)
-                resolve(new Size(imgElement.width, imgElement.height))
-            }
-            imgElement.onerror = function () {
-                reject({
-                    url: url
-                })
-            }
-            imgElement.src = url
-        })
-    }
 }
 
 $(function () {
@@ -306,7 +291,6 @@ $(function () {
 
     var $window = $(window)
     var $document = $(document)
-    var clientWidth = $window.width()
     var clientHeight = $window.height()
 
     $window.on('scroll', handleScroll)
@@ -315,9 +299,8 @@ $(function () {
     function handleScroll() {
         var scrollTop = $(window).scrollTop()
         var diff = $document.height() - (scrollTop + clientHeight)
-        console.log('diff', diff)
 
-        if (diff < 1000) {
+        if (diff < 1500) {
             $window.off('scroll', handleScroll)
             dataService
                 .search('', 10)
