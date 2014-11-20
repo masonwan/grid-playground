@@ -9,6 +9,6 @@ app.get('/', function (req, res) {
 	res.redirect('/index.html')
 })
 
-var port = 80
+var port = 3000
 app.listen(port)
 console.info('Listening port ' + port)

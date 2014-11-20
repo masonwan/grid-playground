@@ -7,8 +7,12 @@ class Pos {
     y:number = 0
 
     constructor(x?:number, y?:number) {
-        this.x = x
-        this.y = y
+        this.x = x || 0
+        this.y = y || 0
+    }
+
+    clone():Pos {
+        return new Pos(this.x, this.y)
     }
 }
 
@@ -18,60 +22,101 @@ class Size {
     height:number = 0
 
     constructor(width?:number, height?:number) {
-        this.width = width
-        this.height = height
+        this.width = width || 0
+        this.height = height || 0
     }
 
-    public area() {
+    area() {
         return this.width * this.height
     }
-}
 
-/**
- * Represent the basic information of a tile.
- */
-class Tile {
-    pos:Pos = Pos.EMPTY
-    size:Size = Size.EMPTY
-
-    constructor(x?:any, y?:any, width?:number, height?:number) {
-        if (x instanceof Pos) {
-            if (y instanceof Size) {
-                this.pos = new Pos(x.x, x.y)
-                this.size = new Size(y.width, y.height)
-                return
-            }
-            throw new Error('Cannot create Tile with given parameters.')
-        } else if (typeof(width) === 'number' && typeof(height) === 'number') {
-            this.pos = new Pos(x, y)
-            this.size = new Size(width, height)
-        }
-    }
-
-    clone():Tile {
-        return new Tile(this.pos, this.size)
-    }
-}
-
-/**
- * A derived class of Tile. It contains the product information.
- */
-class ProductTile extends Tile {
-    price:number
-    imageId:string
-    isShown:boolean = false
-
-    constructor(tile:Tile) {
-        super(tile.pos, tile.size)
+    clone():Size {
+        return new Size(this.width, this.height)
     }
 }
 
 class Card {
-}
 
-class ProductCard extends Card {
+    index:number
+    asin:string
     price:number
     imageId:string
+
+    size:Size = new Size()
+    pos:Pos = new Pos()
+    $element
+
+    _pipe:Pipe
+
+    pipe(pipe?:Pipe) {
+        if (pipe) {
+            this._pipe = pipe
+            return
+        }
+
+        return this._pipe
+    }
+
+    constructor(config) {
+        this.index = config['index']
+        this.asin = config['asin']
+        this.price = config['price']
+        this.imageId = config['imageId']
+    }
+
+    createElement(width) {
+
+        this.size.width = width
+
+        // Create second layout elements.
+        var $imageDivElement = $(document.createElement('div'))
+            .addClass('image')
+        var $overlayElement = $(document.createElement('div'))
+            .addClass('overlay')
+        var $priceElement = $(document.createElement('div'))
+            .addClass('price')
+        var $infoElement = $(document.createElement('div'))
+            .addClass('info')
+            .append($priceElement)
+
+        // Create top element.
+        var $cardElement = $(document.createElement('div'))
+            .data('index', this.index)
+            .addClass('card')
+            .css('width', width)
+            .append($imageDivElement, $overlayElement, $infoElement)
+        this.$element = $cardElement
+
+        var that = this
+        return new Promise(function (resolve, reject) {
+            // Create the img element.
+            var $imgElement = $(document.createElement('img'))
+                .attr('alt', that.asin)
+                .one('load', {card: that, $cardElement: $cardElement}, function (event) {
+                    var $cardElement = event.data.$cardElement
+
+                    var height = $cardElement.find('img').prop('height')
+                    that.size.height = height
+                    $cardElement.height(height)
+
+                    if (that._pipe) {
+
+                    }
+
+                    console.log('Image loaded: ', that)
+                    resolve()
+                })
+                .one('error', function () {
+                    reject('Fail to load "' + url + '". The card will be ignored')
+                })
+            $imageDivElement.append($imgElement)
+
+            // Start to load the image.
+            var url = 'http://ecx.images-amazon.com/images/I/' + that.imageId + '._UX' + width + '_.jpg'
+            $imgElement
+                .attr('src', url)
+        })
+    }
 }
 
 /**
@@ -96,12 +141,21 @@ class DataService {
 }
 
 class Pipe {
-    height:number
-    left:number
-    cards:Card[]
+    gapLength = 5
+    index:number
+    pos:Pos
+    size:Size
+    cards:Card[] = []
 
-    constructor(left:number) {
+    constructor(index:number, pos?:Pos, size?:Size) {
+        this.index = index
+        this.pos = pos || new Pos(0, 0)
+        this.size = size || new Size(0, 0)
+    }
 
+    addCard(card:Card) {
+        this.cards.push(card)
+        card.pipe(this)
     }
 }
 
@@ -111,6 +165,7 @@ class WaterfallViewController {
     pipes:Pipe[] = []
     cards:Card[] = []
     numCards:number = 0
+    latestCardIndex:number = -1
 
     constructor(selector) {
         this.$container = $(selector)
@@ -121,75 +176,113 @@ class WaterfallViewController {
         this.initailizePipes(this.$container.width())
     }
 
-    pipeWidth
+    pipeWidth:number
     minPipeWidth:number = 250
 
     initailizePipes(width:number) {
         var numPipes = Math.floor((width - this.gapLength) / (this.minPipeWidth + this.gapLength))
+        var pipeWidth = this.pipeWidth = Math.floor((width - this.gapLength) / numPipes) - this.gapLength
         var pipes = new Array(numPipes)
         for (var i = 0; i < numPipes; i++) {
-            var left = this.gapLength + i * (this.pipeWidth + this.gapLength)
-            pipes[i] = new Pipe(left)
+            var left = this.gapLength + i * (pipeWidth + this.gapLength)
+            var pipe = pipes[i] = new Pipe(i)
+            pipe.pos = new Pos(left, this.gapLength)
+            pipe.size.width = pipeWidth
         }
-        this.pipeWidth = Math.floor((width - this.gapLength) / numPipes) - this.gapLength
+        this.pipes = pipes
 
         console.log('Total width', width)
         console.log('Number of pipes', numPipes)
-        console.log('Pipe width', this.pipeWidth)
+        console.log('Pipe width', pipeWidth)
     }
 
-    addCard(card:ProductCard) {
-        // Render the card.
+    addCard(card:Card) {
 
-        var url = 'http://ecx.images-amazon.com/images/I/' + card.imageId + '._SL' + this.pipeWidth + '_.jpg'
-        var cardContentHtml = '<div class="card"><div class="image"><img src="$imageUrl" alt=""></div><div class="overlay"></div><div class="info"><div class="price">$price</div></div></div>'
-            .replace(/\$imageUrl/, url)
-            .replace(/\$price/, card.price.toString())
-        var $cardElement = $(cardContentHtml)
-            .css('width', this.pipeWidth)
+        // todo: remove this
+        this.$container.height(2400)
 
-        console.log('cardContentHtml', cardContentHtml)
+        this.cards.push(card)
+        card.index = ++this.latestCardIndex
 
-        this.$container.height(600)
-        this.$container.find('.card').height(309)
-        this.$container.find('.image').height(309)
-
-        this.$container
-            .append($cardElement)
+        return card.createElement(this.pipeWidth)
+            .then(function () {
+                return card
+            })
     }
 
     addCards(cards:Card[]) {
-        var index = 0
         var that = this
-        var intervalId = setInterval(function () {
-            if (index >= cards.length) {
-                clearInterval(intervalId)
-                return
-            }
+        var promises = cards.map(function (card) {
+            return that.addCard(card)
+        })
+        Promise.settle(promises)
+            .then(function (results) {
+                var cards = []
+                results.forEach(function (r) {
+                    if (r.isRejected()) {
+                        console.warn(r.reason())
+                    } else {
+                        cards.push(r.value())
+                    }
+                })
+                return cards
+            })
+            .done(function (cards) {
+                console.log('Add', cards.length, 'cards')
 
-            that.addCard(cards[index])
-            index++
-        }, 10)
+                cards.forEach(function (card) {
+                    var pipe = that.getNextPipe()
+                    var y = card.pos.y = pipe.pos.y + pipe.size.height + that.gapLength
+                    var x = card.pos.x = pipe.pos.x
+                    card.$element.offset({left: x, top: y})
+
+                    console.log('Adding card ', card, ' at Pipe ' + pipe.index)
+                    pipe.addCard(card)
+                    pipe.size.height += card.size.height + that.gapLength
+                    console.log('The height grows to ', pipe.size.height)
+
+                    that.$container.height(pipe.pos.y + pipe.size.height)
+                })
+
+                var elements = cards.map(function (card) {
+                    return card.$element
+                })
+                console.log(elements)
+                that.$container.append(elements)
+            })
     }
 
-    private getNextPipe():Pipe {
-        var pipeWithMaxBottom,
-            maxBottom = -1
+    getNextPipe():Pipe {
+        var
+            pipeWithMinHeight,
+            minHeight = Number.MAX_VALUE
 
-        for (var i = 0; i < this.pipes.length; i++) {
-            var p = this.pipes[i]
-            p.cards[]
+        if (this.pipes.length <= 0) {
+            throw new Error('No pipe exists')
         }
 
-        return null
+        for (var i = 0; i < this.pipes.length; i++) {
+            var pipe = this.pipes[i]
+            if (pipe.size.height < minHeight) {
+                minHeight = pipe.size.height
+                pipeWithMinHeight = pipe
+            }
+        }
+
+        return pipeWithMinHeight
     }
 
     static getImageSize(url) {
-        var that = this
         return new Promise(function (resolve, reject) {
             var imgElement = document.createElement('img')
             imgElement.onload = function () {
-                resolve(new Size($(imgElement).width(), $(imgElement).height()))
+                console.log(window.x = imgElement)
+                resolve(new Size(imgElement.width, imgElement.height))
+            }
+            imgElement.onerror = function () {
+                reject({
+                    url: url
+                })
             }
             imgElement.src = url
         })
@@ -197,18 +290,46 @@ class WaterfallViewController {
 }
 
 $(function () {
-    var controller = new WaterfallViewController('.card-container')
-    var dataService = new DataService()
+    // todo: remove debug
+    var controller = window.controller = new WaterfallViewController('.card-container')
+    var dataService = window.dataService = new DataService()
 
+    controller.$container.empty()
     dataService
         .search('allala', 10)
         .then(function (results) {
             var cards = results.map(function (result, i) {
-                var productCard = new ProductCard()
-                productCard.imageId = result.imageId
-                productCard.price = result.price
-                return productCard
+                return new Card(result)
             })
             controller.addCards(cards)
         })
+
+    var $window = $(window)
+    var $document = $(document)
+    var clientWidth = $window.width()
+    var clientHeight = $window.height()
+
+    $window.on('scroll', handleScroll)
+    handleScroll()
+
+    function handleScroll() {
+        var scrollTop = $(window).scrollTop()
+        var diff = $document.height() - (scrollTop + clientHeight)
+        console.log('diff', diff)
+
+        if (diff < 1000) {
+            $window.off('scroll', handleScroll)
+            dataService
+                .search('', 10)
+                .then(function (results) {
+                    var cards = results.map(function (result, i) {
+                        return new Card(result)
+                    })
+                    controller.addCards(cards)
+                })
+                .done(function () {
+                    $window.on('scroll', handleScroll)
+                })
+        }
+    }
 })
