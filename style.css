@@ -25,6 +25,7 @@ body {
     min-width: 90px;
     min-height: 24px;
     outline: none;
+    cursor: pointer;
 }
 
 .container {
@@ -51,13 +52,23 @@ body {
     z-index: 10;
 }
 
-.card .overlay {
+.card .overlay-gradient {
     z-index: 20;
     position: absolute;
     width: inherit;
     height: inherit;
 
-    background: linear-gradient(to bottom, rgba(0,0,0,0) 60%,rgba(0,0,0,0.3) 110%);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.3) 110%);
+}
+
+.card .overlay-transparent {
+    z-index: 20;
+    position: absolute;
+    bottom: 0;
+    width: inherit;
+    height: 32px;
+
+    background: rgba(0, 0, 0, 0.20);
 }
 
 .card .info {

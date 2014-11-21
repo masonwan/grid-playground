@@ -26,7 +26,7 @@ class Size {
         this.height = height || 0
     }
 
-    area() {
+    area():number {
         return this.width * this.height
     }
 
@@ -64,6 +64,11 @@ class Card {
         this.imageId = config['imageId']
     }
 
+    /**
+     * Asynchronously create a card element.
+     * @param width The width of the card
+     * @returns {Promise} resolve with the element wrapped in jQuery object
+     */
     createElement(width) {
 
         this.size.width = width
@@ -72,7 +77,7 @@ class Card {
         var $imageDivElement = $(document.createElement('div'))
             .addClass('image')
         var $overlayElement = $(document.createElement('div'))
-            .addClass('overlay')
+            .addClass('overlay-transparent')
         var $priceElement = $(document.createElement('div'))
             .addClass('price')
         var $infoElement = $(document.createElement('div'))
@@ -104,7 +109,7 @@ class Card {
                     }
 
                     console.log('Image loaded: ', that)
-                    resolve()
+                    resolve(that)
                 })
                 .one('error', function () {
                     reject('Fail to load "' + url + '". The card will be ignored')
@@ -178,41 +183,45 @@ class WaterfallViewController {
     minPipeWidth:number = 250
 
     initailizePipes(width:number) {
-        var numPipes = Math.floor((width - this.gapLength) / (this.minPipeWidth + this.gapLength))
-        var pipeWidth = this.pipeWidth = Math.floor((width - this.gapLength) / numPipes) - this.gapLength
-        var pipes = new Array(numPipes)
-        for (var i = 0; i < numPipes; i++) {
-            var left = this.gapLength + i * (pipeWidth + this.gapLength)
+        var config = this.calculatePipeSettings(width)
+
+        console.log('pipeSettings: ', config)
+
+        var pipes = new Array(config.numPipes)
+        for (var i = 0; i < config.numPipes; i++) {
+            var left = this.gapLength + i * (config.pipeWidth + this.gapLength)
             var pipe = pipes[i] = new Pipe(i)
             pipe.pos = new Pos(left, this.gapLength)
-            pipe.size.width = pipeWidth
+            pipe.size.width = config.pipeWidth
         }
         this.pipes = pipes
-
-        console.log('Total width', width)
-        console.log('Number of pipes', numPipes)
-        console.log('Pipe width', pipeWidth)
     }
 
-    addCard(card:Card) {
-
-        // todo: remove this
-        this.$container.height(2400)
-
-        this.cards.push(card)
-        card.index = ++this.latestCardIndex
-
-        return card.createElement(this.pipeWidth)
-            .then(function () {
-                return card
-            })
+    calculatePipeSettings(containerWith:number) {
+        var numPipes = Math.floor((containerWith - this.gapLength) / (this.minPipeWidth + this.gapLength))
+        var pipeWidth = this.pipeWidth = Math.floor((containerWith - this.gapLength) / numPipes) - this.gapLength
+        return {
+            numPipes: numPipes,
+            pipeWidth: pipeWidth
+        }
     }
 
     addCards(cards:Card[]) {
         var that = this
-        var promises = cards.map(function (card) {
-            return that.addCard(card)
-        })
+        var promises = new Array(cards.length)
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i]
+            this.cards.push(card)
+            card.index = ++this.latestCardIndex
+            promises[i] = card.createElement(this.pipeWidth)
+                .then(function (card) {
+                    card.$element.on('mouseenter', function (event) {
+                        var originalTarget = this
+                        console.log('originalTarget: ', originalTarget)
+                    })
+                    return card
+                })
+        }
         Promise.settle(promises)
             .then(function (results) {
                 var cards = []
@@ -240,7 +249,6 @@ class WaterfallViewController {
                     console.log('Adding card ', card, ' at Pipe ' + pipe.index)
                     pipe.addCard(card)
                     pipe.size.height += card.size.height + that.gapLength
-                    console.log('The height grows to ', pipe.size.height)
 
                     that.$container.height(pipe.pos.y + pipe.size.height)
                 }
@@ -248,7 +256,6 @@ class WaterfallViewController {
                 var elements = cards.map(function (card) {
                     return card.$element
                 })
-                console.log(elements)
                 that.$container.append(elements)
             })
     }
