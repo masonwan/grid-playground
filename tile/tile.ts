@@ -1,33 +1,4 @@
 /**
- * Position
- */
-class Pos {
-    static EMPTY:Pos = new Pos(0, 0)
-    x:number = 0
-    y:number = 0
-
-    constructor(x?:number, y?:number) {
-        this.x = x
-        this.y = y
-    }
-}
-
-class Size {
-    static EMPTY:Size = new Size(0, 0)
-    width:number = 0
-    height:number = 0
-
-    constructor(width?:number, height?:number) {
-        this.width = width
-        this.height = height
-    }
-
-    public area() {
-        return this.width * this.height
-    }
-}
-
-/**
  * Represent the basic information of a tile.
  */
 class Tile {
@@ -253,27 +224,6 @@ class TileViewController {
             that.addTile(tiles[index])
             index++
         }, 10)
-    }
-}
-
-/**
- * Responsible to send and get data.
- */
-class DataService {
-    private nextDataIndex:number = 0
-
-    search(query, count) {
-        var that = this
-        return new Promise(function (resolve, reject) {
-            setTimeout(function () {
-                if (that.nextDataIndex >= data.length) {
-                    resolve([])
-                }
-                var results = data.slice(that.nextDataIndex, that.nextDataIndex + count)
-                that.nextDataIndex += results.length
-                resolve(results)
-            }, 500)
-        })
     }
 }
 
