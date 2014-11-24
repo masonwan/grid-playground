@@ -1,2 +1,4 @@
-*.js
-*.js.map
+basic-objects.js
+basic-objects.js.map
+template-generator.js
+template-generator.js.map
