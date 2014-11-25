@@ -29,12 +29,12 @@ class Tile {
 
     $element
 
-    createElement(unitLength:number) {
+    createElementAsync(unitLength:number) {
         // Create second layout elements.
         var $imageDivElement = $(document.createElement('div'))
             .addClass('image')
         var $overlayElement = $(document.createElement('div'))
-            .addClass('overlay-transparent')
+            .addClass('overlay')
         var $priceElement = $(document.createElement('div'))
             .addClass('price')
         var $infoElement = $(document.createElement('div'))
@@ -69,7 +69,9 @@ class Tile {
             $imageDivElement.append($imgElement)
 
             // Start to load the image.
-            var url = 'http://ecx.images-amazon.com/images/I/' + that.imageId + '._UX' + unitLength + '_.jpg'
+            var maxSlot = Math.max(that.size.width, that.size.height)
+            var pixels = maxSlot * unitLength
+            var url = 'http://ecx.images-amazon.com/images/I/' + that.imageId + '._UX' + pixels + '_.jpg'
             $imgElement
                 .attr('src', url)
         })
@@ -197,11 +199,12 @@ class TileViewController {
         isAutoCrop: false
     }
 
-    numCols:number = 6
+    tiles:Tile[] = []
+    private numCols:number = 4
     generator:Generator
 
     $container
-    containerWidth:number
+    containerHeight:number = 0
 
     constructor(containerSelector:string) {
         this.generator = new Generator(this.numCols)
@@ -209,7 +212,43 @@ class TileViewController {
     }
 
     clear() {
+        this.tiles.length = 0
         this.$container.empty()
+    }
+
+    setNumColumns(numCols:number) {
+        if (numCols <= 0) {
+            throw new Error('Number of columns must be larger or equal than 1')
+        }
+
+        this.numCols = numCols
+
+        var newGenerator = new Generator(numCols)
+        var tiles = this.tiles
+        for (var i = 0; i < tiles.length; i++) {
+            var tile = tiles[i]
+            var calculatedTile = newGenerator.nextTile(Generator.getStaticSize(tile.asin))
+            tile.pos = calculatedTile.pos
+            tile.size = calculatedTile.size
+
+            var containerWidth = this.$container.width()
+            var availableWidth = containerWidth - this.gapLength
+            var tileLengthWithGap = Math.floor(availableWidth / this.numCols)
+            var unitLength = tileLengthWithGap - this.gapLength
+
+            var x = this.gapLength + tile.pos.x * tileLengthWithGap
+            var y = this.gapLength + tile.pos.y * tileLengthWithGap
+            var width = tile.size.width * unitLength + (tile.size.width - 1) * this.gapLength
+            var height = tile.size.height * unitLength + (tile.size.height - 1) * this.gapLength
+            tile.$element
+                .css({
+                    left: x,
+                    top: y,
+                    width: width,
+                    height: height
+                })
+        }
+        this.generator = newGenerator
     }
 
     addTiles(tiles) {
@@ -227,10 +266,10 @@ class TileViewController {
             tile.pos = calculatedTile.pos.clone()
             tile.size = calculatedTile.size.clone()
 
-            promises[i] = tile.createElement(unitLength)
+            promises[i] = tile.createElementAsync(unitLength)
         }
 
-        Promise.settle(promises)
+        return Promise.settle(promises)
             .then(function (results) {
                 var tiles = []
                 for (var i = 0; i < results.length; i++) {
@@ -258,16 +297,22 @@ class TileViewController {
                         .css({left: x, top: y})
                         .width(width)
                         .height(height)
+
+                    var bottom = y + height + that.gapLength
+                    if (bottom > that.containerHeight) {
+                        that.containerHeight = bottom
+                    }
                 }
 
                 // Adjust container height.
                 that.$container
-                    .height(6000)
+                    .height(that.containerHeight)
 
                 // Insert the tile elements.
                 that.$container.append(tiles.map(function (tile) {
                     return tile.$element
-                }))
+                }));
+                [].push.apply(that.tiles, tiles)
             })
     }
 }
@@ -280,10 +325,6 @@ $(function () {
 
     viewController.clear()
 
-    var dataService = new DataService()
-    dataService.search('dress', 10)
-        .then(addSearchResultsToPanel)
-
     var clientWidth, clientHeight
     var minTileWidth = 250
     $window.resize(onResize)
@@ -295,10 +336,17 @@ $(function () {
 
         var $container = viewController.$container
         var containerWidth = $container.width()
-        var gapLength = $container.gapLength
+        var gapLength = viewController.gapLength
         var minTileWidthWithGap = minTileWidth + gapLength
         var numCols = Math.floor((containerWidth - gapLength) / minTileWidthWithGap)
+
+        console.log('setting numCols: ', numCols)
+        viewController.setNumColumns(numCols)
     }
+
+    var dataService = new DataService()
+    dataService.search('dress', 10)
+        .then(addSearchResultsToPanel)
 
     $window.on('scroll', onScroll)
     onScroll()
@@ -315,8 +363,6 @@ $(function () {
                 .done(function () {
                     $window.on('scroll', onScroll)
                 })
-        } else {
-            console.log('Auto loading not triggered. Diff:', diff)
         }
     }
 
