@@ -24,7 +24,7 @@ class Tile {
     }
 
     clone():Tile {
-        return new Tile(this.pos, this.size)
+        return new Tile(this.pos.clone(), this.size.clone())
     }
 }
 
@@ -32,132 +32,78 @@ class ProductTile extends Tile {
     price:number
     imageId:string
     isShown:boolean = false
-/**/
+    /**/
     constructor(tile:Tile) {
         super(tile.pos, tile.size)
     }
 }
 
-class Template {
-    tiles:Tile[] = []
-    nextTileIndex = null
-
-    constructor(tiles?:Tile[]) {
-        if (tiles == null) {
-            return
-        }
-        this.tiles = tiles
-        this.nextTileIndex = (tiles.length > 0) ? 0 : null
-    }
-
-    public area():number {
-        var areaSum = 0
-        this.tiles.forEach(function (tile) {
-            areaSum += tile.size.area()
-        })
-        return areaSum
-    }
-
-    isFull():boolean {
-        return (this.nextTileIndex != null && this.nextTileIndex)
-    }
-
-    getNextTile():Tile {
-        return null
-    }
-}
-
 class Generator {
-    private static AVAILABLE_SIZES = [
-        new Size(1, 1),
-        new Size(1, 2),
-        new Size(2, 1),
-        new Size(2, 2),
-        new Size(2, 3),
-        new Size(3, 2)
-    ]
-    private static AVAILABLE_Templates = [
-        new Template([
-            new Tile(0, 0, 1, 2),
-            new Tile(1, 0, 1, 1),
-            new Tile(2, 0, 1, 1),
-            new Tile(3, 0, 1, 1),
-            new Tile(1, 1, 1, 2),
-            new Tile(3, 1, 1, 1)
-        ]),
-        new Template([
-            new Tile(0, 0, 2, 3),
-            new Tile(2, 0, 2, 2),
-            new Tile(2, 2, 1, 1),
-            new Tile(3, 2, 1, 1)
-        ])
-    ]
-
-    private static getRandomSize():Size {
-        var index = Math.floor(Math.random() * Generator.AVAILABLE_SIZES.length)
-        return Generator.AVAILABLE_SIZES[index]
-    }
-
-    private static getRandomTemplate():Template {
-        var index = Math.floor(Math.random() * Generator.AVAILABLE_Templates.length)
-        return Generator.AVAILABLE_Templates[index]
-    }
-
-    private static getRnadomItem(list:any[]) {
-        var index = Math.floor(Math.random() * list.length)
-        return list[index]
-    }
-
-    static generate(numCols:number, numRows:number):Template {
-        if (typeof(numCols) !== 'number') {
-            throw new Error('Number of columns must be specified.')
-        }
-        numRows = numRows || 5
-
-        var tiles = [
-            new Tile(0, 0, 1, 2),
-            new Tile(1, 0, 1, 1),
-            new Tile(2, 0, 1, 1),
-            new Tile(3, 0, 1, 1),
-            new Tile(1, 1, 1, 2),
-            new Tile(3, 1, 1, 1)
-        ]
-
-        var template = new Template()
-        template.tiles = tiles
-        return template
-    }
 
     numCols:number
+    numRows:number = 10
+    slotMap:boolean[][]
+
+    previousSlot:Pos = new Pos(-1, 0)
 
     constructor(numCols:number) {
         this.numCols = numCols
+        this.slotMap = new Array(numCols)
+        for (var i = 0; i < numCols; i++) {
+            this.slotMap[i] = new Array(this.numRows)
+        }
     }
 
-    temp = [
-        new Tile(0, 0, 1, 2),
-        new Tile(1, 0, 1, 1),
-        new Tile(2, 0, 1, 1),
-        new Tile(3, 0, 1, 1),
-        new Tile(1, 1, 2, 1),
-        new Tile(3, 1, 1, 1),
-        new Tile(0, 2, 2, 3),
-        new Tile(2, 2, 2, 2),
-        new Tile(2, 4, 1, 1),
-        new Tile(3, 4, 1, 1)
-    ]
-    index = -1
-    blockNum = 1
-
-    nextTile():Tile {
-        this.index++
-        if (this.index >= this.temp.length) {
-            this.blockNum++
-            this.index = 0
+    nextTile(size?:Size):Tile {
+        if (size == null) {
+            size = new Size(1, 1)
+        } else if (size.area() === 0) {
+            throw new Error('The size must have positive length.')
         }
-        var tile = this.temp[this.index]
-        tile.pos.y += (this.blockNum - 1) * 5
-        return tile
+
+        var slotMap = this.slotMap
+        var x = this.previousSlot.x
+        var y = this.previousSlot.y
+
+        // Point the next slot.
+        do {
+            ++x
+            if (x >= this.numCols) {
+                x = 0
+                ++y
+                if (y >= this.numRows) {
+                    // Increase the number of rows for each colum.
+                    for (var i = 0; i < slotMap.length; i++) {
+                        [].push.apply(slotMap[i], new Array(10))
+                    }
+                }
+            }
+        } while(slotMap[x][y])
+
+        var w = size.width
+        var h = size.height
+        // Check the maximun width.
+        var col
+        for (col = 1; col < w; col++) {
+            if (x + col >= this.numCols) {
+                break
+            }
+
+            var isOccupied = slotMap[x + col][y]
+            if (isOccupied) {
+                break
+            }
+        }
+        w = col
+        // Mark on the slot map.
+        for (col = 0; col < w; col++) {
+            for (var row = 0; row < h; row++) {
+                slotMap[x + col][y + row] = true
+            }
+        }
+
+        this.previousSlot = new Pos(x, y)
+        return new Tile(x, y, w, h)
     }
 
     /**
@@ -174,53 +120,6 @@ class Generator {
         }
 
         return sum
-    }
-
-    getStaticSize(text):object {
-        return null
-    }
-}
-
-class TilePanel {
-    private static GAP_LENGTH:number = 10
-    $container
-
-    constructor(selector) {
-        this.$container = $(selector)
-    }
-
-    clear() {
-        this.$container.empty()
-    }
-
-    addTile(tile:ProductTile) {
-        var numColumns = tile.size.width
-        var numRows = tile.size.height
-        var column = tile.pos.x
-        var row = tile.pos.y
-
-        // Create the image element.
-        var width = 250 * numColumns + TilePanel.GAP_LENGTH * (numColumns - 1)
-        var height = 250 * numRows + TilePanel.GAP_LENGTH * (numRows - 1)
-        var url = 'http://ecx.images-amazon.com/images/I/' + tile.imageId + '.jpg'
-        var image = document.createElement('img')
-        $(image)
-            .attr('src', url)
-            .attr('alt', url)
-
-        // Create the div card.
-        var left = 250 * column + column * TilePanel.GAP_LENGTH
-        var top = 250 * row + row * TilePanel.GAP_LENGTH
-        var div = document.createElement('div')
-        $(div)
-            .addClass('card')
-            .addClass('size' + numColumns + 'x' + numRows)
-            .css('left', left)
-            .css('top', top)
-            .css('width', width)
-            .css('height', height)
-            .append(image)
-        this.$container.append(div)
     }
 }
 

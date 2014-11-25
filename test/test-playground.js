@@ -10,10 +10,8 @@ winston.level = 'debug'
 var Generator = require('../lib/template-generator').Generator
 
 describe('foo', function () {
-	it('getRandomSize', function () {
-		for (var i = 0; i < 10; i++) {
-			var size = Generator.getRandomSize()
-			console.log('size: ', size)
-		}
+	it('should not pass', function () {
+		var a = [1, 2, 3]
+		;[].push.apply(a, new Array(10))
 	})
 })

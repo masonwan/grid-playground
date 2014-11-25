@@ -30,6 +30,10 @@ class Size {
         return this.width * this.height
     }
 
+    ratio():number {
+        return this.width / this.height
+    }
+
     clone():Size {
         return new Size(this.width, this.height)
     }

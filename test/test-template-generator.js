@@ -7,19 +7,60 @@ var Promise = require('bluebird')
 var fs = Promise.promisifyAll(require('fs'))
 var winston = require('winston')
 winston.level = 'debug'
-var Generator = require('../lib/template-generator').Generator
+
 var data = require('../lib/data').data
+var Generator = require('../lib/template-generator').Generator
+var basicObjects = require('../lib/basic-objects')
+var Tile = basicObjects.Tile
+var Pos = basicObjects.Pos
+var Size = basicObjects.Size
 
 describe('template-generator', function () {
-	it('should generate for one column', function () {
-		var generator = new Generator(1)
+	var generator = new Generator(4)
 
-		for (var i = 0; i < 20; i++) {
-			console.log(data[i])
-			var product = data[i % data.length]
-			var hash = generator.getTextHash(product.asin)
-			console.log('hash: ', hash)
-		}
+	it('should put the small tile', function () {
+		var tile = generator.nextTile()
+		new Pos(0, 0).should.eql(tile.pos)
+		new Size(1, 1).should.eql(tile.size)
+	})
+
+	it('should put the bigger tile', function () {
+		var tile = generator.nextTile(new Size(2, 2))
+		new Pos(1, 0).should.eql(tile.pos)
+		new Size(2, 2).should.eql(tile.size)
+	})
+
+	it('should add the gaps', function () {
+		var tile
+
+		tile = generator.nextTile(new Size(1, 1))
+		new Pos(3, 0).should.eql(tile.pos)
+		new Size(1, 1).should.eql(tile.size)
+
+		tile = generator.nextTile(new Size(1, 1))
+		new Pos(0, 1).should.eql(tile.pos)
+		new Size(1, 1).should.eql(tile.size)
+
+		tile = generator.nextTile(new Size(1, 1))
+		new Pos(3, 1).should.eql(tile.pos)
+		new Size(1, 1).should.eql(tile.size)
+	})
+
+	it('should be squeezed', function () {
+		var tile
+
+		tile = generator.nextTile(new Size(3, 3))
+		new Pos(0, 2).should.eql(tile.pos)
+		new Size(3, 3).should.eql(tile.size)
+
+		tile = generator.nextTile(new Size(2, 2))
+		new Pos(3, 2).should.eql(tile.pos)
+		new Size(1, 2).should.eql(tile.size)
+	})
+
+	it('should foo', function () {
+		var x = {msg: 'hi'}
+		x.should.eql({msg: 'hi'})
 	})
 //	it('should generate a simple template', function () {
 //		var template = Generator.generate(2, 2)
