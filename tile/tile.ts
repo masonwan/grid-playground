@@ -5,6 +5,10 @@ class Tile {
     pos:Pos = Pos.EMPTY
     size:Size = Size.EMPTY
 
+    asin:string
+    price:number
+    imageId:string
+
     constructor(x?:any, y?:any, width?:number, height?:number) {
         if (x instanceof Pos) {
             if (y instanceof Size) {
@@ -22,55 +26,59 @@ class Tile {
     clone():Tile {
         return new Tile(this.pos, this.size)
     }
+
+    $element
+
+    createElement(unitLength:number) {
+        // Create second layout elements.
+        var $imageDivElement = $(document.createElement('div'))
+            .addClass('image')
+        var $overlayElement = $(document.createElement('div'))
+            .addClass('overlay-transparent')
+        var $priceElement = $(document.createElement('div'))
+            .addClass('price')
+        var $infoElement = $(document.createElement('div'))
+            .addClass('info')
+            .append($priceElement)
+
+        // Create top element.
+        var $cardElement = $(document.createElement('div'))
+            .addClass('card')
+            .css('width', unitLength * this.size.width)
+            .css('height', unitLength * this.size.height)
+            .append($imageDivElement, $overlayElement, $infoElement)
+        this.$element = $cardElement
+
+        var that = this
+        return new Promise(function (resolve, reject) {
+            // Create the img element.
+            var $imgElement = $(document.createElement('img'))
+                .attr('alt', that.asin)
+                .one('load', {card: that, $cardElement: $cardElement}, function (event) {
+                    var $cardElement = event.data.$cardElement
+
+
+                    var height = $cardElement.find('img').prop('height')
+                    $cardElement.height(height)
+
+                    resolve(that)
+                })
+                .one('error', function () {
+                    reject('Fail to load "' + url + '". The card will be ignored')
+                })
+            $imageDivElement.append($imgElement)
+
+            // Start to load the image.
+            var url = 'http://ecx.images-amazon.com/images/I/' + that.imageId + '._UX' + unitLength + '_.jpg'
+            $imgElement
+                .attr('src', url)
+        })
+    }
 }
 
 /**
- * A derived class of Tile. It contains the product information.
+ * Responsible to manage the tile position and size.
  */
-class ProductTile extends Tile {
-    price:number
-    imageId:string
-    isShown:boolean = false
-
-    constructor(tile:Tile) {
-        super(tile.pos, tile.size)
-    }
-}
-
-class Template {
-    tiles:Tile[] = []
-    nextTileIndex = null
-
-    constructor(tiles?:Tile[]) {
-        if (tiles == null) {
-            return
-        }
-        this.tiles = tiles
-        this.nextTileIndex = (tiles.length > 0) ? 0 : null
-    }
-
-    public area():number {
-        var areaSum = 0
-        for (var i = 0; i < this.tiles.length; i++) {
-            var tile = this.tiles[i]
-            areaSum += tile.size.area()
-        }
-        return areaSum
-    }
-
-    isFull():boolean {
-        return (this.nextTileIndex != null && this.nextTileIndex)
-    }
-
-    getNextTile():Tile {
-        return null
-    }
-}
-
-/**
- * Responsible to generate tile layout.
- */
-
 class Generator {
 
     numCols:number
@@ -142,7 +150,7 @@ class Generator {
     /**
      * Return the summation of the char codes.
      */
-    getTextHash(text:string):number {
+    static getTextHash(text:string):number {
         if (!text) {
             throw new Error('The text must be at least two characters.')
         }
@@ -155,10 +163,13 @@ class Generator {
         return sum
     }
 
-    getStaticSize(text:string):Size {
-        var hash = this.getTextHash(text) % 10
+    static getStaticSize(text:string):Size {
+        var hash = Generator.getTextHash(text) % 10
         if (hash < 3) {
             return new Size(1, 1)
+        }
+        if (hash < 4) {
+            return new Size(1, 2)
         }
         if (hash < 5) {
             return new Size(2, 1)
@@ -178,138 +189,147 @@ class Generator {
 }
 
 /**
- * Responsible to control the DOM.
+ * Responsible to control the DOM related to the tile view.
  */
 class TileViewController {
-    private static GAP_LENGTH:number = 5
-    $container
+    gapLength:number = 5
     config = {
         isAutoCrop: false
     }
-    private containerHeight:number = 0
 
-    constructor(selector) {
-        this.$container = $(selector)
+    numCols:number = 6
+    generator:Generator
+
+    $container
+    containerWidth:number
+
+    constructor(containerSelector:string) {
+        this.generator = new Generator(this.numCols)
+        this.$container = $(containerSelector)
     }
 
     clear() {
         this.$container.empty()
     }
 
-    /**
-     * TODO: Update the position and size of all tiles according to the container size.
-     */
-    update() {
-    }
-
-    // TODO: smoothly adding the tiles.
-
-    addTile(tile:ProductTile) {
-        var numColumns = tile.size.width
-        var numRows = tile.size.height
-        var column = tile.pos.x
-        var row = tile.pos.y
-
-        // Create the image element.
-        var width = 250 * numColumns + TileViewController.GAP_LENGTH * (numColumns - 1)
-        var height = 250 * numRows + TileViewController.GAP_LENGTH * (numRows - 1)
-        var longest = Math.max(width, height)
-
-        var extraFunctionString = this.config.isAutoCrop ? '_AC' : ''
-        var url = 'http://ecx.images-amazon.com/images/I/' + tile.imageId + '._SL' + longest + extraFunctionString + '_.jpg'
-
-        var tileContentHtml = '<div class="card"><div class="image" style=""><img src="$imageUrl" alt=""></div><div class="overlay" style=""></div><div class="info"><div class="price">$$price</div></div></div>'
-            .replace(/\$imageUrl/, url)
-            .replace(/\$price/, tile.price.toString())
-
-        // Create the tile element.
-        var left = 250 * column + (column + 1) * TileViewController.GAP_LENGTH
-        var top = 250 * row + (row + 1) * TileViewController.GAP_LENGTH
-        var $tileElement = $(tileContentHtml)
-            .css('left', left)
-            .css('top', top)
-            .css('width', width)
-            .css('height', height)
-
-        // Calculate the container size.
-        var containerHeight = top + height + TileViewController.GAP_LENGTH + 50
-        if (containerHeight > this.containerHeight) {
-            this.containerHeight = containerHeight
-        }
-        var containerWidth = 250 * 4 + TileViewController.GAP_LENGTH * 5
-
-        this.$container
-            .height(this.containerHeight)
-            .width(containerWidth)
-            .append($tileElement)
-    }
-
     addTiles(tiles) {
-        var index = 0
         var that = this
-        var intervalId = setInterval(function () {
-            if (index >= tiles.length) {
-                clearInterval(intervalId)
-                return
-            }
 
-            that.addTile(tiles[index])
-            index++
-        }, 10)
+        var containerWidth = that.$container.width()
+        var availableWidth = containerWidth - that.gapLength
+        var tileLengthWithGap = Math.floor(availableWidth / that.numCols)
+        var unitLength = tileLengthWithGap - that.gapLength
+
+        var promises = new Array(tiles.length)
+        for (var i = 0; i < tiles.length; i++) {
+            var tile = tiles[i]
+            var calculatedTile = this.generator.nextTile(Generator.getStaticSize(tile.asin))
+            tile.pos = calculatedTile.pos.clone()
+            tile.size = calculatedTile.size.clone()
+
+            promises[i] = tile.createElement(unitLength)
+        }
+
+        Promise.settle(promises)
+            .then(function (results) {
+                var tiles = []
+                for (var i = 0; i < results.length; i++) {
+                    var r = results[i]
+                    if (r.isRejected()) {
+                        // todo: track the error.
+                        console.warn(r.reason())
+                    } else {
+                        tiles.push(r.value())
+                    }
+                }
+                return tiles
+            })
+            .then(function (tiles) {
+                console.log('Add', tiles.length, 'tiles')
+
+                // Translate position and size for each tiles.
+                for (var i = 0; i < tiles.length; i++) {
+                    var tile = tiles[i]
+                    var x = that.gapLength + tile.pos.x * tileLengthWithGap
+                    var y = that.gapLength + tile.pos.y * tileLengthWithGap
+                    var width = tile.size.width * unitLength + (tile.size.width - 1) * that.gapLength
+                    var height = tile.size.height * unitLength + (tile.size.height - 1) * that.gapLength
+                    tile.$element
+                        .css({left: x, top: y})
+                        .width(width)
+                        .height(height)
+                }
+
+                // Adjust container height.
+                that.$container
+                    .height(6000)
+
+                // Insert the tile elements.
+                that.$container.append(tiles.map(function (tile) {
+                    return tile.$element
+                }))
+            })
     }
 }
 
 $(function () {
-    var dataService = new DataService()
-    var tilePanel = new TileViewController('.card-container')
+    var $window = $(window)
+    var $document = $(document)
 
-    tilePanel.clear()
+    var viewController = new TileViewController('.card-container')
+
+    viewController.clear()
+
+    var dataService = new DataService()
     dataService.search('dress', 10)
         .then(addSearchResultsToPanel)
 
-    var $window = $(window)
-    var $document = $(document)
-    var clientWidth = $window.width()
-    var clientHeight = $window.height()
+    var clientWidth, clientHeight
+    var minTileWidth = 250
+    $window.resize(onResize)
+    onResize()
 
-    $window.on('scroll', handleScroll)
+    function onResize() {
+        clientWidth = $window.width()
+        clientHeight = $window.height()
 
-    function handleScroll() {
-        var scrollTop = $(window).scrollTop()
+        var $container = viewController.$container
+        var containerWidth = $container.width()
+        var gapLength = $container.gapLength
+        var minTileWidthWithGap = minTileWidth + gapLength
+        var numCols = Math.floor((containerWidth - gapLength) / minTileWidthWithGap)
+    }
+
+    $window.on('scroll', onScroll)
+    onScroll()
+
+    function onScroll() {
+        var scrollTop = $window.scrollTop()
         var diff = $document.height() - (scrollTop + clientHeight)
 
         if (diff < 1000) {
-            $window.off('scroll', handleScroll)
+            $window.off('scroll', onScroll)
             dataService
                 .search('', 10)
                 .then(addSearchResultsToPanel)
                 .done(function () {
-                    $window.on('scroll', handleScroll)
+                    $window.on('scroll', onScroll)
                 })
+        } else {
+            console.log('Auto loading not triggered. Diff:', diff)
         }
     }
 
-    $window.resize(function (event) {
-        clientWidth = $window.width()
-        clientHeight = $window.height()
-    })
-
-    var generator = new Generator(4)
-
     function addSearchResultsToPanel(searchResults) {
-        var productTiles = []
+        var tiles = new Array(searchResults.length)
         for (var i = 0; i < searchResults.length; i++) {
             var searchResult = searchResults[i]
-            var tile = generator.nextTile(generator.getStaticSize(searchResult.asin))
-            if (tile == null) {
-                return
-            }
-            var productTile = new ProductTile(tile)
-            productTile.imageId = searchResult.imageId
-            productTile.price = searchResult.price
-
-            productTiles.push(productTile)
+            var tile = new Tile()
+            tile.asin = searchResult.asin
+            tile.imageId = searchResult.imageId
+            tile.price = searchResult.price
+            tiles[i] = tile
         }
-        tilePanel.addTiles(productTiles)
+        viewController.addTiles(tiles)
     }
 })
