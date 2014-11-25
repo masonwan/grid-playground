@@ -13,7 +13,7 @@ describe('foo', function () {
 	it('getRandomSize', function () {
 		for (var i = 0; i < 10; i++) {
 			var size = Generator.getRandomSize()
-			winston.debug('size: ', size)
+			console.log('size: ', size)
 		}
 	})
 })

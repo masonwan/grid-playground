@@ -8,16 +8,17 @@ var fs = Promise.promisifyAll(require('fs'))
 var winston = require('winston')
 winston.level = 'debug'
 var Generator = require('../lib/template-generator').Generator
-var ProductTile = require('../lib/template-generator').ProductTile
+var data = require('../lib/data').data
 
 describe('template-generator', function () {
-	it('should generate a simple template', function () {
-		var generator = new Generator(4)
+	it('should generate for one column', function () {
+		var generator = new Generator(1)
 
 		for (var i = 0; i < 20; i++) {
-			var tile = generator.nextTile()
-			var productTile = new ProductTile(tile)
-			winston.debug('productTile:', productTile)
+			console.log(data[i])
+			var product = data[i % data.length]
+			var hash = generator.getTextHash(product.asin)
+			console.log('hash: ', hash)
 		}
 	})
 //	it('should generate a simple template', function () {

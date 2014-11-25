@@ -56,3 +56,9 @@ class DataService {
         })
     }
 }
+
+if (exports) {
+    exports.DataService = DataService
+    exports.Pos = Pos
+    exports.Size = Size
+}

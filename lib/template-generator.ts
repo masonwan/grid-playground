@@ -1,29 +1,10 @@
-class Pos {
-    static EMPTY:Pos = new Pos(0, 0)
-    x:number = 0
-    y:number = 0
+var Pos = require('./basic-objects').Pos
+var Size = require('./basic-objects').Size
+var DataService = require('./basic-objects').DataService
 
-    constructor(x?:number, y?:number) {
-        this.x = x
-        this.y = y
-    }
-}
-
-class Size {
-    static EMPTY:Size = new Size(0, 0)
-    width:number = 0
-    height:number = 0
-
-    constructor(width?:number, height?:number) {
-        this.width = width
-        this.height = height
-    }
-
-    public area() {
-        return this.width * this.height
-    }
-}
-
+/**
+ * Represent the basic information of a tile.
+ */
 class Tile {
     pos:Pos = Pos.EMPTY
     size:Size = Size.EMPTY
@@ -31,8 +12,8 @@ class Tile {
     constructor(x?:any, y?:any, width?:number, height?:number) {
         if (x instanceof Pos) {
             if (y instanceof Size) {
-                this.pos = x
-                this.size = y
+                this.pos = new Pos(x.x, x.y)
+                this.size = new Size(y.width, y.height)
                 return
             }
             throw new Error('Cannot create Tile with given parameters.')
@@ -41,13 +22,17 @@ class Tile {
             this.size = new Size(width, height)
         }
     }
+
+    clone():Tile {
+        return new Tile(this.pos, this.size)
+    }
 }
 
 class ProductTile extends Tile {
     price:number
     imageId:string
     isShown:boolean = false
-
+/**/
     constructor(tile:Tile) {
         super(tile.pos, tile.size)
     }
@@ -173,6 +158,26 @@ class Generator {
         var tile = this.temp[this.index]
         tile.pos.y += (this.blockNum - 1) * 5
         return tile
+    }
+
+    /**
+     * Return the summation of the char codes.
+     */
+    getTextHash(text:string):number {
+        if (!text) {
+            throw new Error('The text must be at least two characters.')
+        }
+
+        var sum = 0
+        for (var i = 0; i < text.length; i++) {
+            sum += text.charCodeAt(i)
+        }
+
+        return sum
+    }
+
+    getStaticSize(text):object {
+        return null
     }
 }
 
