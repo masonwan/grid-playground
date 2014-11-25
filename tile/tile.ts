@@ -160,9 +160,6 @@ class Generator {
         if (hash < 3) {
             return new Size(1, 1)
         }
-        if (hash < 4) {
-            return new Size(1, 2)
-        }
         if (hash < 5) {
             return new Size(2, 1)
         }
