@@ -121,6 +121,30 @@ class Generator {
 
         return sum
     }
+
+    getStaticSize(text:string):Size {
+        var hash = this.getTextHash(text) % 10
+        if (hash < 3) {
+            return new Size(1, 1)
+        }
+        if (hash < 4) {
+            return new Size(1, 2)
+        }
+        if (hash < 5) {
+            return new Size(2, 1)
+        }
+        if (hash < 6) {
+            return new Size(2, 2)
+        }
+        if (hash < 7) {
+            return new Size(3, 2)
+        }
+        if (hash < 8) {
+            return new Size(2, 3)
+        }
+
+        return new Size(3, 3)
+    }
 }
 
 exports.Generator = Generator

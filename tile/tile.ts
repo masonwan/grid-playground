@@ -70,78 +70,113 @@ class Template {
 /**
  * Responsible to generate tile layout.
  */
+
 class Generator {
-    private static AVAILABLE_SIZES = [
-        new Size(1, 1),
-        new Size(1, 2),
-        new Size(2, 1),
-        new Size(2, 2),
-        new Size(2, 3),
-        new Size(3, 2)
-    ]
-    private static AVAILABLE_Templates = [
-        new Template([
-            new Tile(0, 0, 1, 2),
-            new Tile(1, 0, 1, 1),
-            new Tile(2, 0, 1, 1),
-            new Tile(3, 0, 1, 1),
-            new Tile(1, 1, 1, 2),
-            new Tile(3, 1, 1, 1)
-        ]),
-        new Template([
-            new Tile(0, 0, 2, 3),
-            new Tile(2, 0, 2, 2),
-            new Tile(2, 2, 1, 1),
-            new Tile(3, 2, 1, 1)
-        ])
-    ]
-
-    private static getRandomSize():Size {
-        var index = Math.floor(Math.random() * Generator.AVAILABLE_SIZES.length)
-        return Generator.AVAILABLE_SIZES[index]
-    }
-
-    private static getRandomTemplate():Template {
-        var index = Math.floor(Math.random() * Generator.AVAILABLE_Templates.length)
-        return Generator.AVAILABLE_Templates[index]
-    }
-
-    private static getRnadomItem(list:any[]) {
-        var index = Math.floor(Math.random() * list.length)
-        return list[index]
-    }
 
     numCols:number
+    numRows:number = 10
+    slotMap:boolean[][]
+
+    previousSlot:Pos = new Pos(-1, 0)
 
     constructor(numCols:number) {
         this.numCols = numCols
+        this.slotMap = new Array(numCols)
+        for (var i = 0; i < numCols; i++) {
+            this.slotMap[i] = new Array(this.numRows)
+        }
     }
 
-    private template = [
-        new Tile(0, 0, 1, 2),
-        new Tile(1, 0, 1, 1),
-        new Tile(2, 0, 1, 1),
-        new Tile(3, 0, 1, 1),
-        new Tile(1, 1, 2, 1),
-        new Tile(3, 1, 1, 1),
-        new Tile(0, 2, 2, 3),
-        new Tile(2, 2, 2, 2),
-        new Tile(2, 4, 1, 1),
-        new Tile(3, 4, 1, 1)
-    ]
-    private index = -1
-    private blockNum = 1
-
-    nextTile():Tile {
-        this.index++
-        if (this.index >= this.template.length) {
-            this.blockNum++
-            this.index = 0
+    nextTile(size?:Size):Tile {
+        if (size == null) {
+            size = new Size(1, 1)
+        } else if (size.area() === 0) {
+            throw new Error('The size must have positive length.')
         }
-        var tile = this.template[this.index]
-        var newTile = new Tile(tile.pos, tile.size)
-        newTile.pos.y += (this.blockNum - 1) * 5
-        return newTile
+
+        var slotMap = this.slotMap
+        var x = this.previousSlot.x
+        var y = this.previousSlot.y
+
+        // Point the next slot.
+        do {
+            ++x
+            if (x >= this.numCols) {
+                x = 0
+                ++y
+                if (y >= this.numRows) {
+                    // Increase the number of rows for each colum.
+                    for (var i = 0; i < slotMap.length; i++) {
+                        [].push.apply(slotMap[i], new Array(10))
+                    }
+                }
+            }
+        } while (slotMap[x][y])
+
+        var w = size.width
+        var h = size.height
+        // Check the maximun width.
+        var col
+        for (col = 1; col < w; col++) {
+            if (x + col >= this.numCols) {
+                break
+            }
+
+            var isOccupied = slotMap[x + col][y]
+            if (isOccupied) {
+                break
+            }
+        }
+        w = col
+        // Mark on the slot map.
+        for (col = 0; col < w; col++) {
+            for (var row = 0; row < h; row++) {
+                slotMap[x + col][y + row] = true
+            }
+        }
+
+        this.previousSlot = new Pos(x, y)
+        return new Tile(x, y, w, h)
+    }
+
+    /**
+     * Return the summation of the char codes.
+     */
+    getTextHash(text:string):number {
+        if (!text) {
+            throw new Error('The text must be at least two characters.')
+        }
+
+        var sum = 0
+        for (var i = 0; i < text.length; i++) {
+            sum += text.charCodeAt(i)
+        }
+
+        return sum
+    }
+
+    getStaticSize(text:string):Size {
+        var hash = this.getTextHash(text) % 10
+        if (hash < 3) {
+            return new Size(1, 1)
+        }
+        if (hash < 4) {
+            return new Size(1, 2)
+        }
+        if (hash < 5) {
+            return new Size(2, 1)
+        }
+        if (hash < 6) {
+            return new Size(2, 2)
+        }
+        if (hash < 7) {
+            return new Size(3, 2)
+        }
+        if (hash < 8) {
+            return new Size(2, 3)
+        }
+
+        return new Size(3, 3)
     }
 }
 
@@ -268,7 +303,7 @@ $(function () {
         var productTiles = []
         for (var i = 0; i < searchResults.length; i++) {
             var searchResult = searchResults[i]
-            var tile = generator.nextTile()
+            var tile = generator.nextTile(generator.getStaticSize(searchResult.asin))
             if (tile == null) {
                 return
             }

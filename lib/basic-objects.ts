@@ -61,7 +61,7 @@ class DataService {
     }
 }
 
-if (exports) {
+if (typeof exports !== 'undefined') {
     exports.DataService = DataService
     exports.Pos = Pos
     exports.Size = Size
