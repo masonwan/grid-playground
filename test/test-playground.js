@@ -7,7 +7,7 @@ var Promise = require('bluebird')
 var fs = Promise.promisifyAll(require('fs'))
 var winston = require('winston')
 winston.level = 'debug'
-var Generator = require('../lib/template-generator').Generator
+var Generator = require('../lib/generator').Generator
 
 describe('foo', function () {
 	it('should not pass', function () {

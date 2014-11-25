@@ -9,7 +9,7 @@ var winston = require('winston')
 winston.level = 'debug'
 
 var data = require('../lib/data').data
-var Generator = require('../lib/template-generator').Generator
+var Generator = require('../lib/generator').Generator
 var basicObjects = require('../lib/basic-objects')
 var Tile = basicObjects.Tile
 var Pos = basicObjects.Pos
