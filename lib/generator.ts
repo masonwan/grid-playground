@@ -54,10 +54,10 @@ class Generator {
         }
     }
 
-    nextTile(size?:Size):Tile {
-        if (size == null) {
-            size = new Size(1, 1)
-        } else if (size.area() === 0) {
+    nextTile(desiredSize?:Size):Tile {
+        if (desiredSize == null) {
+            desiredSize = new Size(1, 1)
+        } else if (desiredSize.area() === 0) {
             throw new Error('The size must have positive length.')
         }
 
@@ -80,8 +80,8 @@ class Generator {
             }
         } while(slotMap[x][y])
 
-        var w = size.width
-        var h = size.height
+        var w = desiredSize.width
+        var h = desiredSize.height
         // Check the maximun width.
         var col
         for (col = 1; col < w; col++) {
@@ -109,7 +109,7 @@ class Generator {
     /**
      * Return the summation of the char codes.
      */
-    getTextHash(text:string):number {
+    static getTextHash(text:string):number {
         if (!text) {
             throw new Error('The text must be at least two characters.')
         }
@@ -122,8 +122,8 @@ class Generator {
         return sum
     }
 
-    getStaticSize(text:string):Size {
-        var hash = this.getTextHash(text) % 10
+    static getStaticSize(text:string):Size {
+        var hash = Generator.getTextHash(text) % 10
         if (hash < 3) {
             return new Size(1, 1)
         }

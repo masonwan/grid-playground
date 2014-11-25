@@ -220,7 +220,7 @@ class WaterfallViewController {
                     return card
                 })
         }
-        Promise.settle(promises)
+        return Promise.settle(promises)
             .then(function (results) {
                 var cards = []
                 for (var i = 0; i < results.length; i++) {
