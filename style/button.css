@@ -1,0 +1,11 @@
+.filter-button {
+    padding: 4px 16px;
+    border: 1px solid rgba(170, 170, 170, 0.33);
+    border-radius: 3px;
+    margin: auto 8px;
+    background: transparent;
+    min-width: 90px;
+    min-height: 24px;
+    outline: none;
+    cursor: pointer;
+}
