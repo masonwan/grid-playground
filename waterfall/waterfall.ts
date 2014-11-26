@@ -31,7 +31,7 @@ class Card {
         var $imageDivElement = $(document.createElement('div'))
             .addClass('image')
         var $overlayElement = $(document.createElement('div'))
-            .addClass('overlay-transparent')
+            .addClass('overlay')
         var $priceElement = $(document.createElement('div'))
             .addClass('price')
         var $infoElement = $(document.createElement('div'))
@@ -109,7 +109,7 @@ class WaterfallViewController {
 
     pipes:Pipe[] = []
     pipeConfig:PipeConfig
-    minPipeWidth:number = 250
+    minPipeWidth:number = 300
 
     constructor(selector) {
         this.$container = $(selector)
