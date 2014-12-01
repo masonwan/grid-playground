@@ -1,4 +1,4 @@
-/// <reference path="../lib/basic-objects.ts" />
+/// <reference path="../lib/data.ts" />
 /// <reference path="../lib/waterfall.ts" />
 declare var Promise:any
 declare var $:any

@@ -1,5 +1,4 @@
 /// <reference path="../lib/basic-objects.ts" />
-declare var Promise:any
 declare var $:any
 
 class Card {
