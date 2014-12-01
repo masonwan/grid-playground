@@ -1,3 +1,5 @@
+declare var Promise:any
+
 /**
  * Position
  */
@@ -37,32 +39,4 @@ class Size {
     clone():Size {
         return new Size(this.width, this.height)
     }
-}
-
-/**
- * Responsible to send and get data.
- */
-class DataService {
-    private nextDataIndex:number = 0
-    simulatedDelay:number = 500
-
-    search(query, count) {
-        var that = this
-        return new Promise(function (resolve, reject) {
-            setTimeout(function () {
-                if (that.nextDataIndex >= data.length) {
-                    resolve([])
-                }
-                var results = data.slice(that.nextDataIndex, that.nextDataIndex + count)
-                that.nextDataIndex += results.length
-                resolve(results)
-            }, this.simulatedDelay)
-        })
-    }
-}
-
-if (typeof exports !== 'undefined') {
-    exports.DataService = DataService
-    exports.Pos = Pos
-    exports.Size = Size
 }

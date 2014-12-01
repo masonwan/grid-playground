@@ -1,6 +1,5 @@
-var Pos = require('./basic-objects').Pos
-var Size = require('./basic-objects').Size
-var DataService = require('./basic-objects').DataService
+/// <reference path="basic-objects.ts" />
+declare var $:any
 
 /**
  * Represent the basic information of a tile.
@@ -8,6 +7,10 @@ var DataService = require('./basic-objects').DataService
 class Tile {
     pos:Pos = Pos.EMPTY
     size:Size = Size.EMPTY
+
+    asin:string
+    price:number
+    imageId:string
 
     constructor(x?:any, y?:any, width?:number, height?:number) {
         if (x instanceof Pos) {
@@ -24,20 +27,63 @@ class Tile {
     }
 
     clone():Tile {
-        return new Tile(this.pos.clone(), this.size.clone())
+        return new Tile(this.pos, this.size)
+    }
+
+    $element
+
+    createElementAsync(unitLength:number) {
+        // Create second layout elements.
+        var $imageDivElement = $(document.createElement('div'))
+            .addClass('image')
+        var $overlayElement = $(document.createElement('div'))
+            .addClass('overlay')
+        var $priceElement = $(document.createElement('div'))
+            .addClass('price')
+        var $infoElement = $(document.createElement('div'))
+            .addClass('info')
+            .append($priceElement)
+
+        // Create top element.
+        var $cardElement = $(document.createElement('div'))
+            .addClass('card')
+            .css('width', unitLength * this.size.width)
+            .css('height', unitLength * this.size.height)
+            .append($imageDivElement, $overlayElement, $infoElement)
+        this.$element = $cardElement
+
+        var that = this
+        return new Promise(function (resolve, reject) {
+            // Create the img element.
+            var $imgElement = $(document.createElement('img'))
+                .attr('alt', that.asin)
+                .one('load', {card: that, $cardElement: $cardElement}, function (event) {
+                    var $cardElement = event.data.$cardElement
+
+
+                    var height = $cardElement.find('img').prop('height')
+                    $cardElement.height(height)
+
+                    resolve(that)
+                })
+                .one('error', function () {
+                    reject('Fail to load "' + url + '". The card will be ignored')
+                })
+            $imageDivElement.append($imgElement)
+
+            // Start to load the image.
+            var maxSlot = Math.max(that.size.width, that.size.height)
+            var pixels = maxSlot * unitLength
+            var url = 'http://ecx.images-amazon.com/images/I/' + that.imageId + '._UX' + pixels + '_.jpg'
+            $imgElement
+                .attr('src', url)
+        })
     }
 }
 
-class ProductTile extends Tile {
-    price:number
-    imageId:string
-    isShown:boolean = false
-    /**/
-    constructor(tile:Tile) {
-        super(tile.pos, tile.size)
-    }
-}
-
+/**
+ * Responsible to manage the tile position and size.
+ */
 class Generator {
 
     numCols:number
@@ -54,10 +100,10 @@ class Generator {
         }
     }
 
-    nextTile(desiredSize?:Size):Tile {
-        if (desiredSize == null) {
-            desiredSize = new Size(1, 1)
-        } else if (desiredSize.area() === 0) {
+    nextTile(size?:Size):Tile {
+        if (size == null) {
+            size = new Size(1, 1)
+        } else if (size.area() === 0) {
             throw new Error('The size must have positive length.')
         }
 
@@ -78,10 +124,10 @@ class Generator {
                     }
                 }
             }
-        } while(slotMap[x][y])
+        } while (slotMap[x][y])
 
-        var w = desiredSize.width
-        var h = desiredSize.height
+        var w = size.width
+        var h = size.height
         // Check the maximun width.
         var col
         for (col = 1; col < w; col++) {
@@ -146,6 +192,3 @@ class Generator {
         return new Size(3, 3)
     }
 }
-
-exports.Generator = Generator
-exports.ProductTile = ProductTile
