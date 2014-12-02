@@ -3,7 +3,8 @@ body {
     padding: 0;
     border: 0;
     margin: 0;
-    overflow: scroll;
+    overflow-y: scroll;
+    overflow-x: auto;
 }
 
 .result-banner {
@@ -24,6 +25,7 @@ body {
 
 .card-container {
     position: relative;
+    margin-left: 20px;
     overflow: hidden;
     background: #dddddd;
 }
@@ -84,4 +86,33 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
+}
+
+/*
+ * Desktop only
+*/
+
+.menu-container {
+    box-shadow: 0 0 16px 0 rgba(0,0,0, 0.16);
+    position: fixed;
+    z-index: 40;
+    background: white;
+    height: 100%;
+}
+
+.menu-container.expanded {
+    width: 250px;
+}
+
+.menu-container.collapsed {
+
+}
+
+.menu-inner-container ul {
+    list-style-type: none;
+    padding: 0 16px;
+}
+
+.menu-inner-container li {
+    margin: 0 0 8px 0;
 }

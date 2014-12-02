@@ -10,21 +10,130 @@
 
     <script src="../bower_components/jquery/dist/jquery.min.js" defer></script>
     <script type="text/javascript" src="../bower_components/bluebird/js/browser/bluebird.js"></script>
-    <script type="text/javascript" src="../lib/data.js" defer></script>
-    <script type="text/javascript" src="../lib/basic-objects.js" defer></script>
     <script type="text/javascript" src="controller.js" defer></script>
 </head>
 <body>
 
 <div class="container">
 
-    <div class="menu-container">
+    <!--<div>-->
+        <!--<svg style="width:48px;height:48px;" viewBox="0 0 24 24">-->
+            <!--<path fill="#6F6F6F" ng-attr-d="{{viewForm.icon.data}}" d="M3 6L21 6L21 8L3 8L3 6ZM3 11L21 11L21 13L3 13L3 11ZM3 16L21 16L21 18L3 18L3 16Z"></path>-->
+        <!--</svg>-->
+    <!--</div>-->
 
+    <div class="menu-container">
+        <div class="menu-inner-container">
+            <div class="tree">
+                <ul>
+                    <li>
+                        Men's Fashion
+                    </li>
+                    <li>
+                        <ul>
+                            <li>
+                                Men's Oxfords
+                            </li>
+                            <li>
+                                Men's Loafers & Slip-Ons
+                            </li>
+                            <li>
+                                Men's Boots
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        Books
+                    </li>
+                    <li>
+                        <ul>
+                            <li>
+                                Fashion Design
+                            </li>
+                            <li class="see-more">
+                                + See More
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="see-all">
+                        + See All Departments
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div class="card-container">
 
     </div>
+
+    <script type="text/javascript">
+
+        (function () {
+            if (document.readyState === 'interactive' || document.readyState === 'complete') {
+                onReady()
+            } else {
+                document.addEventListener("DOMContentLoaded", onReady)
+            }
+
+            function onReady() {
+                document.removeEventListener("DOMContentLoaded", onReady)
+
+                var $menuContainer = $('.menu-container')
+                var $cardContainer = $('.card-container')
+                var isClickTrigger = (location.hash.indexOf('useHover') < 0)
+
+                if (isClickTrigger) {
+                    bindMenuClick()
+                    bindContainerClick()
+
+                    function bindMenuClick() {
+                        $menuContainer
+                                .on('click', function () {
+                                    showMenu()
+                                })
+                    }
+
+                    function bindContainerClick() {
+                        $cardContainer
+                                .on('click', function () {
+                                    hideMenu()
+                                })
+                    }
+                } else {
+                    $menuContainer
+                            .on('mouseenter', function () {
+                                showMenu()
+                            })
+                            .on('mouseleave', function () {
+                                hideMenu()
+                            })
+                }
+
+                function showMenu() {
+                    console.log('Showing menu')
+                    $menuContainer
+                            .stop()
+                    var left = $menuContainer.position().left
+                    $menuContainer
+                            .animate({
+                                left: 0
+                            }, 100)
+                }
+
+                function hideMenu() {
+                    console.log('Hiding menu')
+                    $menuContainer
+                            .stop()
+                    var left = $menuContainer.position().left
+                    $menuContainer
+                            .animate({
+                                left: -230
+                            }, 100)
+                }
+            }
+        })()
+    </script>
 </div>
 
 </body>
