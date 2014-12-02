@@ -1,62 +1,62 @@
-declare var $:any
+declare var $:any;
 
 class MenuController {
-    $menuContainer
-    $containerParent
+    $menuContainer;
+    $containerParent;
 
     initlize() {
-        var $container = this.$menuContainer = $('.menu-container')
-        var $parent = this.$containerParent = $container.parent()
-        var isClickTrigger = (location.hash.indexOf('useHover') < 0)
+        var $container = this.$menuContainer = $('.menu-container');
+        var $parent = this.$containerParent = $container.parent();
+        var isClickTrigger = (location.hash.indexOf('useHover') < 0);
 
         if (isClickTrigger) {
-            bindMenuClick()
-            bindContainerClick()
+            bindMenuClick();
+            bindContainerClick();
 
             function bindMenuClick() {
                 $container
                     .on('click', function (event) {
-                        showMenu()
-                        event.stopPropagation()
-                    })
+                        showMenu();
+                        event.stopPropagation();
+                    });
             }
 
             function bindContainerClick() {
                 $parent
                     .on('click', function () {
-                        hideMenu()
-                    })
+                        hideMenu();
+                    });
             }
         } else {
             $container
                 .on('mouseenter', function () {
-                    showMenu()
+                    showMenu();
                 })
                 .on('mouseleave', function () {
-                    hideMenu()
-                })
+                    hideMenu();
+                });
         }
 
         function showMenu() {
-            console.log('Showing menu')
+            console.log('Showing menu');
             $container
-                .stop()
-            var left = $container.position().left
+                .stop();
+            var left = $container.position().left;
             $container
                 .animate({
                     left: 0
-                }, 100)
+                }, 100);
         }
 
         function hideMenu() {
-            console.log('Hiding menu')
+            console.log('Hiding menu');
             $container
-                .stop()
-            var left = $container.position().left
+                .stop();
+            var left = $container.position().left;
             $container
                 .animate({
                     left: -230
-                }, 100)
+                }, 100);
         }
     }
 }

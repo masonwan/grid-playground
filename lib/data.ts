@@ -1,4 +1,4 @@
-/// <reference path="../lib/basic-objects.ts" />
+declare var Promise;
 
 var data = [
     {"asin": "B00CN47HS4", "imageId": "41f4hX7sLFL", "price": 13.1},
@@ -96,27 +96,27 @@ var data = [
     {"asin": "B004UJL0O2", "imageId": "41YZ%2BDqil4L", "price": 9.28},
     {"asin": "B009791H8Y", "imageId": "41WigxuGzqL", "price": 42.2},
     {"asin": "B00D83QXH0", "imageId": "417jjoltM7L", "price": 20.08},
-    {"asin": "B004UJL0O2", "imageId": "51IyOM%2BMDIL", "price": 13.26}
-]
+    {"asin": "B004UJL0O2", "imageId": "51IyOM%2BMDIL", "price": 13.26},
+];
 
 /**
  * Responsible to send and get data.
  */
 class DataService {
-    private nextDataIndex:number = 0
-    simulatedDelay:number = 500
+    private nextDataIndex:number = 0;
+    simulatedDelay:number = 500;
 
     search(query, count) {
-        var that = this
+        var that = this;
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
                 if (that.nextDataIndex >= data.length) {
-                    resolve([])
+                    resolve([]);
                 }
-                var results = data.slice(that.nextDataIndex, that.nextDataIndex + count)
-                that.nextDataIndex += results.length
-                resolve(results)
-            }, this.simulatedDelay)
-        })
+                var results = data.slice(that.nextDataIndex, that.nextDataIndex + count);
+                that.nextDataIndex += results.length;
+                resolve(results);
+            }, this.simulatedDelay);
+        });
     }
 }
