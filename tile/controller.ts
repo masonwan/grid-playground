@@ -121,9 +121,12 @@ class TileViewController {
                     .height(that.containerHeight)
 
                 // Insert the tile elements.
-                that.$container.append(tiles.map(function (tile) {
-                    return tile.$element
-                }));
+                var elements = new Array(tiles.length)
+                for (i = 0; i < tiles.length; i++) {
+                    var tile = tiles[i]
+                    elements[i] = tile.$element
+                }
+                that.$container.append(elements);
                 [].push.apply(that.tiles, tiles)
             })
     }
