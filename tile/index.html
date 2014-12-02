@@ -80,7 +80,7 @@
                 document.removeEventListener("DOMContentLoaded", onReady)
 
                 var $menuContainer = $('.menu-container')
-                var $cardContainer = $('.card-container')
+                var $parent = $menuContainer.parent()
                 var isClickTrigger = (location.hash.indexOf('useHover') < 0)
 
                 if (isClickTrigger) {
@@ -89,13 +89,14 @@
 
                     function bindMenuClick() {
                         $menuContainer
-                                .on('click', function () {
+                                .on('click', function (event) {
                                     showMenu()
+                                    event.stopPropagation()
                                 })
                     }
 
                     function bindContainerClick() {
-                        $cardContainer
+                        $parent
                                 .on('click', function () {
                                     hideMenu()
                                 })
