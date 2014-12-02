@@ -3,6 +3,8 @@
 declare var Promise:any
 declare var $:any
 
+'use strict'
+
 // For debug.
 interface Window {
     controller
@@ -26,64 +28,11 @@ class WaterfallViewController {
             throw new Error('Cannot find the container with selector: ' + selector)
         }
         this.initailizePipes()
-        this.handleResizing()
     }
 
-    resizingDelay:number = 500
-    resizingTimeoutId:number
-
-    handleResizing() {
-        var that = this
-        $(window).resize(function (event) {
-            if (that.resizingTimeoutId == null) {
-                that.resizingTimeoutId = setTimeout(function () {
-                    that.resizingTimeoutId = null
-                    that.resize()
-                }, that.resizingDelay)
-            }
-        })
-    }
-
-    resize() {
-        var that = this
-        var config = that.calculatePipeSettings()
-        console.log('config: ', config)
-
-        if (config.numPipes !== that.pipeConfig.numPipes) {
-            // Update columns.
-        }
-        if (config.pipeWidth !== that.pipeConfig.pipeWidth) {
-            // Update card width.
-            var newWidth = config.pipeWidth
-            // Update the pipe width.
-            for (var j = 0; j < that.pipes.length; j++) {
-                var pipe = that.pipes[j]
-                pipe.pos.x = that.gapLength + pipe.index * (newWidth + that.gapLength)
-            }
-            var heights = new Array(that.cards.length)
-            for (var k = 0; k < heights.length; k++) {
-                var card = that.cards[k]
-                var $img = card.$element.find('img')
-                heights[k] = $img.height()
-            }
-            for (var i = 0; i < that.cards.length; i++) {
-                var card = that.cards[i]
-                card.size.width = newWidth
-                card.$element.css('width', newWidth)
-                card.pos.x = card.pipe.pos.x
-                if (card.pos.y < 0) {
-                    console.log('card.pos: ', card.pos || 'null')
-                    console.log('card.$element.offset(): ', card.$element.position())
-                }
-                card.$element.css({
-                    left: card.pos.x,
-                    top: card.pos.y,
-                    height: heights[i]
-                })
-            }
-        }
-
-        that.pipeConfig = that.calculatePipeSettings()
+    clear() {
+        this.cards.length = 0
+        this.$container.empty()
     }
 
     initailizePipes() {
@@ -99,6 +48,96 @@ class WaterfallViewController {
             pipe.size.width = config.pipeWidth
         }
         this.pipes = pipes
+    }
+
+    setPipeConfig(config:PipeConfig) {
+        if (config.numPipes < 1) {
+            throw new Error('The number cannot be less than 1')
+        }
+
+        var numPipes = config.numPipes
+        var pipes = new Array(numPipes)
+        for (var i = 0; i < numPipes; i++) {
+            var left = this.gapLength + i * (config.pipeWidth + this.gapLength)
+            var pipe = pipes[i] = new Pipe(i)
+            pipe.pos = new Pos(left, this.gapLength)
+            pipe.size.width = config.pipeWidth
+        }
+        this.pipes = pipes
+
+        var cards = this.cards
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i]
+
+            var pipe = this.getNextPipe()
+            var y = card.pos.y = pipe.pos.y + pipe.size.height
+            var x = card.pos.x = pipe.pos.x
+            card.$element.css({
+                left: x,
+                top: y,
+                width: config.pipeWidth
+            })
+
+            pipe.addCard(card)
+            pipe.size.height += card.size.height + this.gapLength
+
+            this.$container.height(pipe.pos.y + pipe.size.height)
+        }
+    }
+
+    /**
+     * Asynchronously create a card element.
+     * @param card The card object
+     * @returns {Promise} resolve with the element wrapped in jQuery object
+     */
+    createCardElement(card) {
+
+        // Create second layout elements.
+        var $imageDivElement = $(document.createElement('div'))
+            .addClass('image')
+        var $overlayElement = $(document.createElement('div'))
+            .addClass('overlay')
+        var $priceElement = $(document.createElement('div'))
+            .addClass('price')
+        var $infoElement = $(document.createElement('div'))
+            .addClass('info')
+            .append($priceElement)
+
+        // Create top element.
+        var $cardElement = $(document.createElement('div'))
+            .data('index', card.index)
+            .addClass('card')
+            .css('width', card.size.width)
+            .append($imageDivElement, $overlayElement, $infoElement)
+        card.$element = $cardElement
+
+        return new Promise(function (resolve, reject) {
+            // Create the img element.
+            var $imgElement = $(document.createElement('img'))
+                .attr('alt', card.asin)
+                .one('load', {card: card, $cardElement: $cardElement}, function (event) {
+                    var $cardElement = event.data.$cardElement
+                    var card:Card = event.data.card
+
+                    var height = $cardElement.find('img').prop('height')
+                    console.log('card.index: ', card.index)
+                    console.log('width', $cardElement.find('img').prop('width'))
+                    console.log('height: ', height)
+                    card.size.height = height
+                    $cardElement.height(height)
+
+                    resolve(card)
+                })
+                .one('error', function () {
+                    reject('Fail to load "' + url + '". The card will be ignored')
+                })
+            $imageDivElement.append($imgElement)
+
+            // Start to load the image.
+            var url = 'http://ecx.images-amazon.com/images/I/' + card.imageId + '._UX' + card.size.width + '_.jpg'
+            $imgElement
+                .attr('src', url)
+        })
     }
 
     calculatePipeSettings():PipeConfig {
@@ -120,14 +159,15 @@ class WaterfallViewController {
             var card = cards[i]
             this.cards.push(card)
             card.index = ++this.latestCardIndex
-            promises[i] = card.createElement(this.pipeConfig.pipeWidth)
-                .then(function (card) {
-                    card.$element.on('mouseenter', function (event) {
-                        var originalTarget = this
-                        console.log('originalTarget: ', originalTarget)
-                    })
-                    return card
-                })
+            card.size.width = this.pipeConfig.pipeWidth
+            promises[i] = this.createCardElement(card)
+            //.then(function registerMouseHover(card) {
+            //    card.$element.on('mouseenter', function (event) {
+            //        var originalTarget = this
+            //        console.log('originalTarget: ', originalTarget)
+            //    })
+            //    return card
+            //})
         }
         return Promise.settle(promises)
             .then(function (results) {
@@ -153,7 +193,6 @@ class WaterfallViewController {
                     var x = card.pos.x = pipe.pos.x
                     card.$element.css({left: x, top: y})
 
-                    console.log('Adding card ', card, ' at Pipe ' + pipe.index)
                     pipe.addCard(card)
                     pipe.size.height += card.size.height + that.gapLength
 
@@ -195,16 +234,7 @@ $(function () {
     // todo: remove debug
     window.controller = controller
     window.dataService = dataService
-    controller.$container.empty()
-
-    dataService
-        .search('allala', 10)
-        .then(function (results) {
-            var cards = results.map(function (result, i) {
-                return new Card(result)
-            })
-            controller.addCards(cards)
-        })
+    controller.clear()
 
     var $window = $(window)
     var $document = $(document)
@@ -221,6 +251,7 @@ $(function () {
 
         if (diff < 1500) {
             $window.off('scroll', handleScroll)
+            console.log('off')
             dataService
                 .search('', 10)
                 .then(function (results) {
@@ -231,7 +262,69 @@ $(function () {
                 })
                 .done(function () {
                     $window.on('scroll', handleScroll)
+                    console.log('on')
                 })
         }
+    }
+
+
+    var resizingDelay:number = 500
+    var resizingTimeoutId:number
+    handleResizing()
+
+    function handleResizing() {
+        var that = this
+        $window.resize(function (event) {
+            if (resizingTimeoutId == null) {
+                resizingTimeoutId = setTimeout(function () {
+                    resizingTimeoutId = null
+                    resize()
+                }, resizingDelay)
+                console.log('resizingTimeoutId: ', resizingTimeoutId)
+            } else {
+                console.info('Found resizing ID: ', that.resizingTimeoutId)
+            }
+        })
+    }
+
+    function resize() {
+        var config = controller.calculatePipeSettings()
+        console.log('config: ', config)
+
+        if (config.numPipes !== controller.pipeConfig.numPipes) {
+            controller.setPipeConfig(config)
+        }
+        if (config.pipeWidth !== controller.pipeConfig.pipeWidth) {
+            // Update card width.
+            var newWidth = config.pipeWidth
+            // Update the pipe width.
+            for (var j = 0; j < controller.pipes.length; j++) {
+                var pipe = controller.pipes[j]
+                pipe.pos.x = controller.gapLength + pipe.index * (newWidth + controller.gapLength)
+            }
+            var heights = new Array(controller.cards.length)
+            for (var k = 0; k < heights.length; k++) {
+                var card = controller.cards[k]
+                var $img = card.$element.find('img')
+                heights[k] = $img.height()
+            }
+            for (var i = 0; i < controller.cards.length; i++) {
+                var card = controller.cards[i]
+                card.size.width = newWidth
+                card.$element.css('width', newWidth)
+                card.pos.x = card.pipe.pos.x
+                if (card.pos.y < 0) {
+                    console.log('card.pos: ', card.pos || 'null')
+                    console.log('card.$element.offset(): ', card.$element.position())
+                }
+                card.$element.css({
+                    left: card.pos.x,
+                    top: card.pos.y,
+                    height: heights[i]
+                })
+            }
+        }
+
+        controller.pipeConfig = controller.calculatePipeSettings()
     }
 })
