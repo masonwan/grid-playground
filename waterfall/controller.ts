@@ -137,7 +137,7 @@ class WaterfallViewController {
             // Start to load the image.
 //            var styleCode = '._UX' + card.size.width + '_'
             var styleCode = ''
-            var url = 'http://ecx.images-amazon.com/images/I/' + card.imageId + styleCode +'.jpg'
+            var url = 'http://ecx.images-amazon.com/images/I/' + card.imageId + styleCode + '.jpg'
             $imgElement
                 .attr('src', url)
         })

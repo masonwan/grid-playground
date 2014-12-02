@@ -1,5 +1,6 @@
 /// <reference path="../lib/data.ts" />
 /// <reference path="../lib/tile.ts" />
+/// <reference path="../lib/menuController.ts" />
 
 /**
  * Responsible to control the DOM related to the tile view.
@@ -189,4 +190,7 @@ $(function () {
         }
         viewController.addTiles(tiles)
     }
+
+    var menuController = new MenuController()
+    menuController.initlize()
 })

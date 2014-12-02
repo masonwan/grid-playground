@@ -1,9 +1,2 @@
-basic-objects.js
-basic-objects.js.map
-data.js
-data.js.map
-
-tile.js
-tile.js.map
-waterfall.js
-waterfall.js.map
+*.js
+*.js.map
