@@ -1,6 +1,5 @@
 /// <reference path="../lib/data.ts" />
 /// <reference path="../lib/waterfall.ts" />
-declare var Promise:any
 declare var $:any
 
 'use strict'
@@ -119,10 +118,12 @@ class WaterfallViewController {
                     var $cardElement = event.data.$cardElement
                     var card:Card = event.data.card
 
-                    var height = $cardElement.find('img').prop('height')
-                    console.log('card.index: ', card.index)
-                    console.log('width', $cardElement.find('img').prop('width'))
-                    console.log('height: ', height)
+                    var $img = $cardElement.find('img')
+                    var originalHeight = $img.prop('height')
+                    var originalWidth = $img.prop('width')
+                    var width = card.size.width
+                    var height = originalHeight * width / originalWidth
+
                     card.size.height = height
                     $cardElement.height(height)
 
@@ -134,7 +135,9 @@ class WaterfallViewController {
             $imageDivElement.append($imgElement)
 
             // Start to load the image.
-            var url = 'http://ecx.images-amazon.com/images/I/' + card.imageId + '._UX' + card.size.width + '_.jpg'
+//            var styleCode = '._UX' + card.size.width + '_'
+            var styleCode = ''
+            var url = 'http://ecx.images-amazon.com/images/I/' + card.imageId + styleCode +'.jpg'
             $imgElement
                 .attr('src', url)
         })
@@ -234,7 +237,6 @@ $(function () {
     // todo: remove debug
     window.controller = controller
     window.dataService = dataService
-    controller.clear()
 
     var $window = $(window)
     var $document = $(document)
@@ -251,7 +253,6 @@ $(function () {
 
         if (diff < 1500) {
             $window.off('scroll', handleScroll)
-            console.log('off')
             dataService
                 .search('', 10)
                 .then(function (results) {
@@ -262,7 +263,6 @@ $(function () {
                 })
                 .done(function () {
                     $window.on('scroll', handleScroll)
-                    console.log('on')
                 })
         }
     }
